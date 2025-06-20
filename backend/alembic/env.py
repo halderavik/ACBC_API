@@ -28,6 +28,10 @@ target_metadata = Base.metadata
 # Convert async URL to sync URL for Alembic
 sync_url = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
 sync_url = sync_url.replace("sqlite+aiosqlite://", "sqlite://")
+# Handle Heroku's postgres:// format
+if sync_url.startswith("postgres://"):
+    sync_url = sync_url.replace("postgres://", "postgresql://", 1)
+
 config.set_main_option("sqlalchemy.url", sync_url)
 
 # other values from the config, defined by the needs of env.py,

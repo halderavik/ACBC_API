@@ -1,0 +1,23 @@
+{
+  "name": "ACBC API",
+  "description": "Adaptive Choice-Based Conjoint Analysis API",
+  "repository": "https://github.com/halderavik/ACBC_API.git",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["python", "fastapi", "conjoint", "analysis", "api"],
+  "env": {
+    "SECRET_KEY": {
+      "description": "A secret key for the application",
+      "generator": "secret"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
+} 

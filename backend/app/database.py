@@ -13,12 +13,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database URL from environment variable
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./acbc.db")
+# Heroku provides DATABASE_URL, but we need to convert it to async format
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    # Heroku provides postgres:// but we need postgresql+asyncpg://
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+else:
+    # Fallback to local development
+    DATABASE_URL = os.getenv("LOCAL_DATABASE_URL", "sqlite+aiosqlite:///./acbc.db")
 
 # Create async engine
 engine = create_async_engine(
     DATABASE_URL, 
-    echo=True,
+    echo=False,  # Set to False for production
     pool_pre_ping=True,
     pool_recycle=300
 )
