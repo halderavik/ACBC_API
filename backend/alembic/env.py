@@ -21,8 +21,8 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.models import Base
-from app.database import DATABASE_URL
+from backend.app.models import Base
+from backend.app.database import DATABASE_URL
 target_metadata = Base.metadata
 
 # Convert async URL to sync URL for Alembic
