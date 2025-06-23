@@ -1,23 +1,36 @@
 {
   "name": "ACBC API",
-  "description": "Adaptive Choice-Based Conjoint Analysis API",
+  "description": "Adaptive Choice-Based Conjoint Analysis API with BYO configuration, screening tasks, and tournament choices",
   "repository": "https://github.com/halderavik/ACBC_API.git",
   "logo": "https://node-js-sample.herokuapp.com/node.png",
-  "keywords": ["python", "fastapi", "conjoint", "analysis", "api"],
+  "keywords": ["python", "fastapi", "conjoint", "analysis", "api", "postgresql", "alembic"],
   "env": {
     "SECRET_KEY": {
       "description": "A secret key for the application",
       "generator": "secret"
+    },
+    "DEBUG": {
+      "description": "Debug mode (set to False for production)",
+      "value": "False"
     }
   },
   "addons": [
     {
-      "plan": "heroku-postgresql:mini"
+      "plan": "heroku-postgresql:essential-0"
     }
   ],
   "buildpacks": [
     {
       "url": "heroku/python"
     }
-  ]
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "scripts": {
+    "postdeploy": "alembic upgrade head"
+  }
 } 

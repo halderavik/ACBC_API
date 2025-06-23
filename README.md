@@ -1,27 +1,43 @@
 # ACBC (Adaptive Choice-Based Conjoint) API
 
-A FastAPI-based backend service for implementing Adaptive Choice-Based Conjoint analysis. This API provides endpoints for BYO (Bring Your Own) configuration, screening tasks, and tournament-based choice experiments.
+A FastAPI-based backend service for implementing Adaptive Choice-Based Conjoint analysis. This API provides endpoints for BYO (Build-Your-Own) configuration, screening tasks, and tournament-based choice experiments.
+
+## 🌐 Live API
+
+**Production URL:** `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com`
+
+**Interactive Documentation:** `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/docs`
+
+**API Documentation:** [API.md](./API.md)
 
 ## 🏗️ Architecture Overview
 
 The ACBC API follows a modular architecture with clear separation of concerns:
 
 ```
-backend/
-├── app/
-│   ├── main.py              # FastAPI application entry point
-│   ├── database.py          # Database configuration and async session management
-│   ├── models.py            # SQLAlchemy database models
-│   ├── schemas.py           # Pydantic schemas for request/response validation
-│   ├── services.py          # Business logic and service layer
-│   ├── utils.py             # Utility functions for design generation
-│   └── routers/
-│       ├── byo.py           # BYO configuration endpoints
-│       ├── screening.py     # Screening task endpoints
-│       └── tournament.py    # Tournament choice endpoints
-├── alembic/                 # Database migrations
-├── requirements.txt         # Python dependencies
-└── .env                     # Environment configuration
+ACBC/
+├── backend/
+│   ├── app/
+│   │   ├── main.py              # FastAPI application entry point
+│   │   ├── database.py          # Database configuration and async session management
+│   │   ├── models.py            # SQLAlchemy database models
+│   │   ├── schemas.py           # Pydantic schemas for request/response validation
+│   │   ├── services.py          # Business logic and service layer
+│   │   ├── utils.py             # Utility functions for design generation
+│   │   └── routers/
+│   │       ├── byo.py           # BYO configuration endpoints
+│   │       ├── screening.py     # Screening task endpoints
+│   │       └── tournament.py    # Tournament choice endpoints
+│   ├── alembic/                 # Database migrations
+│   ├── requirements.txt         # Python dependencies
+│   └── .env                     # Environment configuration
+├── requirements.txt             # Root requirements for Heroku
+├── Procfile                     # Heroku process configuration
+├── runtime.txt                  # Python version specification
+├── app.json                     # Heroku app configuration
+├── deploy.sh                    # Automated deployment script
+├── API.md                       # Comprehensive API documentation
+└── README.md                    # This file
 ```
 
 ## 🚀 Features
@@ -33,6 +49,7 @@ backend/
 - **Automatic Migrations**: Alembic for database schema management
 - **Robust Error Handling**: Comprehensive error handling for malformed requests
 - **Heroku Ready**: Production-ready deployment configuration
+- **Complete API Documentation**: Interactive docs and comprehensive guides
 
 ## 📋 Prerequisites
 
@@ -121,10 +138,20 @@ The API will be available at `http://localhost:8000`
 
 ## ☁️ Heroku Deployment
 
+### Current Deployment Status
+
+✅ **Successfully Deployed** to Heroku  
+✅ **PostgreSQL Database** configured and running  
+✅ **Database Migrations** applied  
+✅ **All API Endpoints** tested and working  
+
+**Live Application:** `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com`
+
 ### Prerequisites
 
 1. **Heroku Account**: Sign up at [heroku.com](https://heroku.com)
 2. **Heroku CLI**: Install from [devcenter.heroku.com](https://devcenter.heroku.com/articles/heroku-cli)
+3. **Payment Verification**: Required for PostgreSQL addon (Essential 0 plan: ~$5/month)
 
 ### Quick Deployment
 
@@ -152,7 +179,7 @@ chmod +x deploy.sh
 
 3. **Add PostgreSQL Addon**
    ```bash
-   heroku addons:create heroku-postgresql:mini
+   heroku addons:create heroku-postgresql:essential-0
    ```
 
 4. **Set Environment Variables**
@@ -199,314 +226,143 @@ heroku config:set SECRET_KEY=your-secret-key
 heroku config:set DEBUG=False
 ```
 
+## 🧪 Testing the API
+
+### Quick Test with curl
+
+#### 1. Health Check
+```bash
+curl https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/
+```
+
+#### 2. Create BYO Configuration
+```bash
+curl -X POST "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/byo-config" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "test123",
+    "selected_attributes": {
+      "brand": ["Nike", "Adidas", "Puma"],
+      "material": ["leather", "canvas", "synthetic"],
+      "style": ["casual", "athletic", "formal"]
+    }
+  }'
+```
+
+#### 3. Get Screening Design
+```bash
+curl "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/screening/design?session_id=test123"
+```
+
+### Using Postman
+
+1. Import the API collection from the examples in [API.md](./API.md)
+2. Set the base URL to: `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com`
+3. Test each endpoint sequentially
+
 ## 📚 API Documentation
 
-Once the server is running, you can access:
-- **Interactive API Docs**: `http://localhost:8000/docs` (local) or `https://your-app.herokuapp.com/docs` (Heroku)
-- **ReDoc Documentation**: `http://localhost:8000/redoc` (local) or `https://your-app.herokuapp.com/redoc` (Heroku)
+### Complete Documentation
 
-## 🔌 API Endpoints
+- **[API.md](./API.md)**: Comprehensive API documentation with examples
+- **[Interactive Docs](https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/docs)**: Swagger UI for real-time testing
 
-### 1. BYO Configuration
+### Available Endpoints
 
-#### Create Session and Configure Attributes
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Health check and API info |
+| GET | `/health` | Health check for Heroku |
+| POST | `/api/byo-config` | Create BYO configuration |
+| GET | `/api/screening/design` | Get screening design |
+| POST | `/api/screening/responses` | Submit screening responses |
+| GET | `/api/tournament/choice` | Get tournament choice tasks |
+| POST | `/api/tournament/choice-response` | Submit choice response |
 
-**Endpoint:** `POST /api/byo-config`
+## 🔧 Development
 
-**Request Body:**
-```json
-{
-  "session_id": null,
-  "selected_attributes": {
-    "Color": ["Red", "Blue", "Green"],
-    "Size": ["S", "M", "L"],
-    "Price": ["$10", "$20", "$30"]
-  }
-}
+### Project Structure
+
+```
+backend/
+├── app/
+│   ├── main.py              # FastAPI app configuration
+│   ├── database.py          # Database setup and session management
+│   ├── models.py            # SQLAlchemy ORM models
+│   ├── schemas.py           # Pydantic validation schemas
+│   ├── services.py          # Business logic layer
+│   ├── utils.py             # Utility functions
+│   └── routers/             # API route handlers
+│       ├── byo.py           # BYO configuration routes
+│       ├── screening.py     # Screening task routes
+│       └── tournament.py    # Tournament choice routes
+├── alembic/                 # Database migration files
+├── requirements.txt         # Python dependencies
+└── .env                     # Environment variables
 ```
 
-**Response:**
-```json
-{
-  "session_id": "019aa9fe-4c76-4b4b-bb8d-cc5cdcc0019d"
-}
-```
+### Database Schema
 
-**Alternative GET Request (handles malformed URLs):**
-```
-GET /api/byo-config?session_id=null&selected_attributes={"Color":["Red","Blue"],"Size":["S","M"]}
-```
+The application uses the following main tables:
 
-### 2. Screening Tasks
+- **`sessions`**: Stores BYO configurations and session data
+- **`screening_tasks`**: Stores screening task concepts and responses
+- **`tournament_tasks`**: Stores tournament choice tasks and responses
 
-#### Get Screening Design
+### Key Features
 
-**Endpoint:** `GET /api/screening/design`
+- **Async Database Operations**: All database operations are asynchronous
+- **Automatic Migration Management**: Alembic handles schema changes
+- **Robust Error Handling**: Comprehensive error responses
+- **Input Validation**: Pydantic schemas ensure data integrity
+- **Adaptive Learning**: Utility estimates update based on user choices
 
-**Query Parameters:**
-- `session_id` (required): Session identifier
-- `task_number` (optional): Defaults to 1
+## 🚀 Performance & Scalability
 
-**Example:**
-```
-GET /api/screening/design?session_id=019aa9fe-4c76-4b4b-bb8d-cc5cdcc0019d
-```
+- **Async Architecture**: Non-blocking I/O operations
+- **Database Connection Pooling**: Efficient database connections
+- **Stateless Design**: Each request is independent
+- **Heroku Optimization**: Configured for Heroku's ephemeral filesystem
 
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "concept": {
-      "Color": "Red",
-      "Size": "S"
-    },
-    "position": 1,
-    "response": null
-  },
-  {
-    "id": 2,
-    "concept": {
-      "Color": "Blue",
-      "Size": "M"
-    },
-    "position": 2,
-    "response": null
-  }
-]
-```
+## 🔒 Security Considerations
 
-#### Submit Screening Responses
+- **Input Validation**: All inputs validated with Pydantic
+- **SQL Injection Protection**: SQLAlchemy ORM prevents injection
+- **Environment Variables**: Sensitive data stored in environment variables
+- **CORS Configuration**: Configurable CORS settings for production
 
-**Endpoint:** `POST /api/screening/responses`
+## 📊 Monitoring & Logging
 
-**Request Body:**
-```json
-{
-  "session_id": "019aa9fe-4c76-4b4b-bb8d-cc5cdcc0019d",
-  "responses": [true, false, true, false, true]
-}
-```
-
-**Response:**
-```json
-{
-  "status": "ok"
-}
-```
-
-### 3. Tournament Choices
-
-#### Get Tournament Choice
-
-**Endpoint:** `GET /api/tournament/choice`
-
-**Query Parameters:**
-- `session_id` (required): Session identifier
-- `task_number` (optional): Defaults to 1
-
-**Example:**
-```
-GET /api/tournament/choice?session_id=019aa9fe-4c76-4b4b-bb8d-cc5cdcc0019d&task_number=1
-```
-
-**Response:**
-```json
-{
-  "task_number": 1,
-  "concepts": [
-    {
-      "Color": "Red",
-      "Size": "S"
-    },
-    {
-      "Color": "Blue",
-      "Size": "M"
-    },
-    {
-      "Color": "Red",
-      "Size": "M"
-    }
-  ]
-}
-```
-
-#### Submit Choice Response
-
-**Endpoint:** `POST /api/tournament/choice-response`
-
-**Request Body:**
-```json
-{
-  "session_id": "019aa9fe-4c76-4b4b-bb8d-cc5cdcc0019d",
-  "task_number": 1,
-  "selected_concept_id": 2
-}
-```
-
-**Response:**
-```json
-{
-  "next_task": 2
-}
-```
-
-## 🧪 Testing with Postman
-
-### Complete Testing Flow
-
-1. **Create Session**
-   ```
-   POST http://localhost:8000/api/byo-config
-   Content-Type: application/json
-   
-   {
-     "session_id": null,
-     "selected_attributes": {
-       "Color": ["Red", "Blue"],
-       "Size": ["S", "M"]
-     }
-   }
-   ```
-
-2. **Get Screening Design**
-   ```
-   GET http://localhost:8000/api/screening/design?session_id=YOUR_SESSION_ID
-   ```
-
-3. **Submit Screening Responses**
-   ```
-   POST http://localhost:8000/api/screening/responses
-   Content-Type: application/json
-   
-   {
-     "session_id": "YOUR_SESSION_ID",
-     "responses": [true, false, true, false, true]
-   }
-   ```
-
-4. **Get Tournament Choice**
-   ```
-   GET http://localhost:8000/api/tournament/choice?session_id=YOUR_SESSION_ID&task_number=1
-   ```
-
-5. **Submit Choice Response**
-   ```
-   POST http://localhost:8000/api/tournament/choice-response
-   Content-Type: application/json
-   
-   {
-     "session_id": "YOUR_SESSION_ID",
-     "task_number": 1,
-     "selected_concept_id": 2
-   }
-   ```
-
-### Testing on Heroku
-
-Replace `localhost:8000` with your Heroku app URL:
-```
-https://your-app-name.herokuapp.com
-```
-
-## 🗄️ Database Schema
-
-### Tables
-
-1. **sessions**
-   - `id` (String, Primary Key): Session identifier
-   - `byo_config` (JSON): BYO configuration attributes
-   - `utilities` (JSON): Estimated utilities
-
-2. **screening_tasks**
-   - `id` (Integer, Primary Key): Task identifier
-   - `session_id` (String, Foreign Key): Reference to session
-   - `concept` (JSON): Concept attributes
-   - `position` (Integer): Task position
-   - `response` (Boolean): User response
-
-3. **tournament_tasks**
-   - `id` (Integer, Primary Key): Task identifier
-   - `session_id` (String, Foreign Key): Reference to session
-   - `task_number` (Integer): Tournament task number
-   - `concepts` (JSON): Available concepts
-   - `choice` (Integer): Selected concept ID
-
-## 🔧 Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `sqlite+aiosqlite:///./acbc.db` |
-| `DEBUG` | Enable debug mode | `True` |
-| `SECRET_KEY` | Application secret key | `your-secret-key-here` |
-
-### Database Configuration
-
-The API supports both PostgreSQL (recommended) and SQLite:
-
-- **PostgreSQL**: `postgresql+asyncpg://user:password@host:port/database`
-- **SQLite**: `sqlite+aiosqlite:///./acbc.db`
-- **Heroku**: Automatically configured via `DATABASE_URL`
-
-## 🚨 Error Handling
-
-The API includes comprehensive error handling:
-
-- **400 Bad Request**: Invalid parameters or malformed requests
-- **404 Not Found**: Session or resource not found
-- **500 Internal Server Error**: Server-side errors
-
-### Common Error Scenarios
-
-1. **Session not found**: Ensure the session_id exists
-2. **Invalid JSON**: Check request body format
-3. **Database connection**: Verify PostgreSQL is running
-4. **Missing parameters**: Provide all required parameters
-
-## 🔄 Development
-
-### Adding New Features
-
-1. **Models**: Add to `app/models.py`
-2. **Schemas**: Add to `app/schemas.py`
-3. **Services**: Add business logic to `app/services.py`
-4. **Routes**: Add endpoints to appropriate router in `app/routers/`
-
-### Running Tests
-
-```bash
-# Install test dependencies
-pip install pytest pytest-asyncio
-
-# Run tests
-pytest
-```
-
-### Code Style
-
-The project follows PEP 8 standards and uses:
-- **Black** for code formatting
-- **Type hints** for better code quality
-- **Docstrings** for documentation
-
-## 📝 License
-
-This project is licensed under the MIT License.
+- **Health Check Endpoints**: `/` and `/health` for monitoring
+- **Error Logging**: Comprehensive error handling and logging
+- **Database Monitoring**: Alembic migration tracking
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests
+4. Add tests if applicable
 5. Submit a pull request
 
-## 📞 Support
+## 📄 License
 
-For questions or issues, please create an issue in the repository or contact the development team.
+This project is licensed under the MIT License.
 
----
+## 🆘 Support
 
-**ACBC API** - Adaptive Choice-Based Conjoint Analysis Backend Service 
+For support and questions:
+
+1. Check the [API Documentation](./API.md)
+2. Visit the [Interactive Docs](https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/docs)
+3. Review the error messages in the API responses
+4. Check the deployment logs: `heroku logs --tail`
+
+## 📈 Future Enhancements
+
+- [ ] Authentication and authorization
+- [ ] Rate limiting
+- [ ] Advanced analytics endpoints
+- [ ] Export functionality for results
+- [ ] Real-time collaboration features
+- [ ] Mobile app support 
