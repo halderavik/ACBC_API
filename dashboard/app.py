@@ -11,8 +11,9 @@ import time
 app = Flask(__name__)
 
 # Configuration
-API_BASE_URL = "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com"
-DB_PATH = "api_monitor.db"
+API_BASE_URL = os.getenv("API_BASE_URL", "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com")
+DB_PATH = os.getenv("DB_PATH", "api_monitor.db")
+PORT = int(os.getenv("PORT", 5000))
 
 # Initialize database
 def init_db():
@@ -347,4 +348,4 @@ if __name__ == '__main__':
     init_db()
     
     # Start the dashboard
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    app.run(debug=False, host='0.0.0.0', port=PORT) 
