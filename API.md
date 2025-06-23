@@ -8,6 +8,41 @@ The ACBC (Adaptive Choice-Based Conjoint) API is a FastAPI-based backend service
 
 **API Documentation:** `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/docs`
 
+## 📊 Monitoring Dashboard
+
+The ACBC API includes a comprehensive monitoring dashboard for tracking API activity, performance, and user behavior.
+
+**Dashboard URL:** `http://localhost:5000` (when running locally)
+
+**Features:**
+- **Real-time API Monitoring**: Live tracking of API health and performance
+- **Request Analytics**: Detailed statistics on API usage and response times
+- **Error Tracking**: Comprehensive error logging with stack traces
+- **Session Analytics**: User session tracking and completion rates
+- **Traffic Analysis**: Traffic sources and user agent tracking
+- **Visual Charts**: Interactive charts for endpoint usage and status codes
+
+**Dashboard Setup:**
+```bash
+cd dashboard
+pip install -r requirements.txt
+python generate_sample_data.py  # Optional: Generate demo data
+python app.py
+```
+
+**Integration with API:**
+The dashboard can be integrated with your FastAPI application using the provided monitoring middleware:
+
+```python
+from fastapi import FastAPI
+from dashboard.monitor_middleware import monitoring_middleware
+
+app = FastAPI()
+app.middleware("http")(monitoring_middleware)
+```
+
+For detailed dashboard documentation, see [dashboard/README.md](./dashboard/README.md).
+
 ---
 
 ## Table of Contents
@@ -20,6 +55,7 @@ The ACBC (Adaptive Choice-Based Conjoint) API is a FastAPI-based backend service
 6. [Error Handling](#error-handling)
 7. [Data Models](#data-models)
 8. [Examples](#examples)
+9. [Monitoring Dashboard](#monitoring-dashboard)
 
 ---
 

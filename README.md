@@ -10,6 +10,27 @@ A FastAPI-based backend service for implementing Adaptive Choice-Based Conjoint 
 
 **API Documentation:** [API.md](./API.md)
 
+## 📊 Monitoring Dashboard
+
+**Dashboard Features:**
+- **Real-time API Monitoring**: Live tracking of API health, requests, and performance
+- **Visual Analytics**: Charts for endpoint usage and status code distribution
+- **Error Tracking**: Comprehensive error logging with stack traces
+- **Session Analytics**: User session tracking and completion rates
+- **Traffic Analysis**: Traffic sources and user agent tracking
+- **Auto-refresh**: 30-second automatic data updates
+
+**Dashboard Setup:**
+```bash
+cd dashboard
+pip install -r requirements.txt
+python generate_sample_data.py  # Optional: Generate demo data
+python app.py
+```
+Then open `http://localhost:5000` in your browser.
+
+**Dashboard Documentation:** [dashboard/README.md](./dashboard/README.md)
+
 ## 🏗️ Architecture Overview
 
 The ACBC API follows a modular architecture with clear separation of concerns:
@@ -31,6 +52,12 @@ ACBC/
 │   ├── alembic/                 # Database migrations
 │   ├── requirements.txt         # Python dependencies
 │   └── .env                     # Environment configuration
+├── dashboard/                   # Monitoring dashboard
+│   ├── app.py                   # Flask dashboard application
+│   ├── templates/               # HTML templates
+│   ├── monitor_middleware.py    # FastAPI monitoring middleware
+│   ├── generate_sample_data.py  # Sample data generator
+│   └── requirements.txt         # Dashboard dependencies
 ├── requirements.txt             # Root requirements for Heroku
 ├── Procfile                     # Heroku process configuration
 ├── runtime.txt                  # Python version specification
@@ -50,6 +77,8 @@ ACBC/
 - **Robust Error Handling**: Comprehensive error handling for malformed requests
 - **Heroku Ready**: Production-ready deployment configuration
 - **Complete API Documentation**: Interactive docs and comprehensive guides
+- **Real-time Monitoring**: Comprehensive dashboard for API activity tracking
+- **Visual Analytics**: Charts and graphs for performance insights
 
 ## 📋 Prerequisites
 

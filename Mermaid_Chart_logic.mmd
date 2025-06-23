@@ -1,0 +1,138 @@
+---
+config:
+  layout: dagre
+---
+flowchart TD
+    A[Survey Start] --> B[Initialize Session in Survey Platform]
+    
+    %% BYO Section - Mostly Survey Platform
+    B --> C[BYO: Display Attribute Categories]
+    C --> D[Respondent Selects Levels]
+    D --> E[Survey Platform: Validate BYO Config]
+    E --> F[**API CALL 1**: Send BYO Config to Python]
+    F --> G[Python: Store BYO Reference Product]
+    G --> H[Python: Return Success Status]
+    H --> I[Survey: Proceed to Screening]
+    
+    %% Screening Section
+    I --> J[**API CALL 2**: Request Screening Design]
+    J --> K[Python: Generate Screening Concepts Matrix]
+    K --> L[Python: Return Screening Concepts JSON]
+    L --> M[Survey: Parse & Display Screening Tasks]
+    M --> N[Respondent: Accept/Reject Each Concept]
+    N --> O[Survey: Collect All Screening Responses]
+    O --> P{All Screening Tasks Complete?}
+    
+    P -->|No| M
+    P -->|Yes| Q[**API CALL 3**: Send Screening Responses]
+    Q --> R[Python: Analyze Screening Patterns]
+    R --> S[Python: Estimate Initial Utilities]
+    S --> T[Python: Return Utility Status]
+    T --> U[Survey: Proceed to Tournament]
+    
+    %% Choice Tournament Section
+    U --> V[**API CALL 4**: Request First Tournament Set]
+    V --> W[Python: Generate Tournament Concepts]
+    W --> X[Python: Create Optimized Choice Set]
+    X --> Y[Python: Return Choice Set JSON]
+    Y --> Z[Survey: Parse & Display Choice Task]
+    Z --> AA[Respondent Makes Choice]
+    AA --> AB[Survey: Capture Choice Response]
+    AB --> AC[**API CALL 5**: Send Choice Response]
+    AC --> AD[Python: Update Utility Estimates]
+    AD --> AE[Python: Run Adaptive Algorithm]
+    AE --> AF{More Tournament Tasks Needed?}
+    
+    AF -->|Yes| AG[Python: Generate Next Choice Set]
+    AG --> AH[Python: Return Next Choice Set JSON]
+    AH --> AI[Survey: Update Display Variables]
+    AI --> Z
+    
+    AF -->|No| AJ[Python: Finalize Data Collection]
+    AJ --> AK[Python: Return Completion Status]
+    AK --> AL[Survey: Continue to Next Section]
+    
+    %% Platform Responsibilities
+    subgraph "Survey Platform Responsibilities"
+        B
+        C
+        D
+        E
+        I
+        M
+        N
+        O
+        P
+        U
+        Z
+        AA
+        AB
+        AI
+        AL
+        AM[UI Display Logic]
+        AN[Response Validation]
+        AO[Session Management]
+        AP[Data Piping Between Pages]
+        AQ[JavaScript for API Calls]
+        AR[Embedded Data Storage]
+    end
+    
+    subgraph "Python API Responsibilities"
+        G
+        K
+        L
+        R
+        S
+        W
+        X
+        Y
+        AD
+        AE
+        AG
+        AH
+        AJ
+        AS[Design Matrix Generation]
+        AT[Concept Creation Logic]
+        AU[Utility Estimation]
+        AV[Adaptive Algorithms]
+        AW[Session Data Storage]
+        AX[Response Pattern Analysis]
+    end
+    
+    %% API Call Details
+    subgraph "API Endpoints & Data Flow"
+        AY[POST /api/byo-config<br/>Data: Selected attributes]
+        AZ[GET /api/screening-design<br/>Data: Session ID, BYO config]
+        BA[POST /api/screening-responses<br/>Data: Accept/reject array]
+        BB[GET /api/tournament-choice<br/>Data: Session ID, task number]
+        BC[POST /api/choice-response<br/>Data: Selected concept ID]
+    end
+    
+    %% Connect API calls to endpoints
+    F --> AY
+    J --> AZ
+    Q --> BA
+    V --> BB
+    AC --> BC
+    
+    %% Data Storage
+    subgraph "Data Management"
+        BD[(Python Session DB)]
+        BE[Survey Platform Variables]
+        BF[Response History]
+        BG[Design Matrices]
+    end
+    
+    G --> BD
+    S --> BD
+    AD --> BD
+    AB --> BE
+    O --> BE
+    
+    classDef apiCall fill:#ff9999,stroke:#333,stroke-width:2px
+    classDef surveyPlatform fill:#99ccff,stroke:#333,stroke-width:2px
+    classDef pythonAPI fill:#99ff99,stroke:#333,stroke-width:2px
+    
+    class F,J,Q,V,AC apiCall
+    class C,D,E,M,N,O,Z,AA,AB surveyPlatform
+    class K,R,S,W,X,AD,AE,AG pythonAPI
