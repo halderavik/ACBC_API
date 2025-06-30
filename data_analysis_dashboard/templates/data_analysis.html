@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACBC Data Analysis Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            color: #4a5568;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #4a5568;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 1rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h3 {
+            color: #4a5568;
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .data-table {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .data-table h3 {
+            color: #4a5568;
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table th {
+            background-color: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            position: sticky;
+            top: 0;
+        }
+
+        .table tr:hover {
+            background-color: #f7fafc;
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .session-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .session-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .session-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .session-id {
+            font-weight: bold;
+            color: #4a5568;
+            font-size: 1.1rem;
+        }
+
+        .session-date {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .session-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .session-stat {
+            text-align: center;
+            padding: 8px;
+            background: #f7fafc;
+            border-radius: 6px;
+        }
+
+        .session-stat-value {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .session-stat-label {
+            font-size: 0.8rem;
+            color: #718096;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .export-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .concept-display {
+            background: #f7fafc;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 5px 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .attribute-level {
+            display: inline-block;
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid,
+            .tables-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 ACBC Data Analysis Dashboard</h1>
+            <p>Comprehensive analysis of all collected session data, designs shown, and respondent selections</p>
+            
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="showTab('overview')">Overview</button>
+                <button class="nav-tab" onclick="showTab('sessions')">Sessions</button>
+                <button class="nav-tab" onclick="showTab('designs')">Designs</button>
+                <button class="nav-tab" onclick="showTab('responses')">Responses</button>
+                <button class="nav-tab" onclick="showTab('completion')">Completion</button>
+                <button class="nav-tab" onclick="showTab('attributes')">Attributes</button>
+            </div>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Sessions</h3>
+                    <div class="stat-value" id="total-sessions">-</div>
+                    <div class="stat-label">All time sessions</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Screening Started</h3>
+                    <div class="stat-value" id="screening-started">-</div>
+                    <div class="stat-label">Sessions with screening</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Tournament Started</h3>
+                    <div class="stat-value" id="tournament-started">-</div>
+                    <div class="stat-label">Sessions with tournament</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Tournament Completed</h3>
+                    <div class="stat-value" id="tournament-completed">-</div>
+                    <div class="stat-label">Fully completed sessions</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Session Completion Flow</h3>
+                    <canvas id="completion-flow-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Recent Sessions Activity</h3>
+                    <canvas id="recent-activity-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="data-table">
+                <h3>Recent Sessions</h3>
+                <div class="table-container">
+                    <table class="table" id="recent-sessions-table">
+                        <thead>
+                            <tr>
+                                <th>Session ID</th>
+                                <th>Screening Tasks</th>
+                                <th>Screening Responses</th>
+                                <th>Tournament Tasks</th>
+                                <th>Tournament Choices</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-sessions-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessions Tab -->
+        <div id="sessions" class="tab-content">
+            <button class="refresh-btn" onclick="loadSessionsData()">Refresh Data</button>
+            <div id="sessions-list">
+                <div class="loading">Loading sessions...</div>
+            </div>
+        </div>
+
+        <!-- Designs Tab -->
+        <div id="designs" class="tab-content">
+            <button class="refresh-btn" onclick="loadDesignAnalysis()">Refresh Data</button>
+            
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Most Shown Screening Concepts</h3>
+                    <canvas id="screening-concepts-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Most Shown Tournament Concepts</h3>
+                    <canvas id="tournament-concepts-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="data-table">
+                <h3>Attribute Level Usage</h3>
+                <div class="table-container">
+                    <table class="table" id="attribute-usage-table">
+                        <thead>
+                            <tr>
+                                <th>Attribute</th>
+                                <th>Level</th>
+                                <th>Frequency</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attribute-usage-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Responses Tab -->
+        <div id="responses" class="tab-content">
+            <button class="refresh-btn" onclick="loadResponseAnalysis()">Refresh Data</button>
+            
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Screening Response Distribution</h3>
+                    <canvas id="screening-responses-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Tournament Choice Distribution</h3>
+                    <canvas id="tournament-choices-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="data-table">
+                <h3>Concept Preference Analysis</h3>
+                <div class="table-container">
+                    <table class="table" id="concept-preferences-table">
+                        <thead>
+                            <tr>
+                                <th>Concept</th>
+                                <th>Choice Position</th>
+                                <th>Frequency</th>
+                                <th>Preference %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="concept-preferences-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Tab -->
+        <div id="completion" class="tab-content">
+            <button class="refresh-btn" onclick="loadCompletionAnalysis()">Refresh Data</button>
+            
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Session Statistics</h3>
+                    <canvas id="session-stats-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Average Responses per Session</h3>
+                    <canvas id="avg-responses-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="data-table">
+                <h3>Completion Flow Statistics</h3>
+                <div class="table-container">
+                    <table class="table" id="completion-stats-table">
+                        <thead>
+                            <tr>
+                                <th>Stage</th>
+                                <th>Count</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="completion-stats-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attributes Tab -->
+        <div id="attributes" class="tab-content">
+            <button class="refresh-btn" onclick="loadAttributeAnalysis()">Refresh Data</button>
+            
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Attribute Level Preferences</h3>
+                    <canvas id="attribute-preferences-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>BYO Configuration Usage</h3>
+                    <canvas id="byo-configs-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="data-table">
+                <h3>Level Preference Analysis</h3>
+                <div class="table-container">
+                    <table class="table" id="level-preferences-table">
+                        <thead>
+                            <tr>
+                                <th>Attribute</th>
+                                <th>Level</th>
+                                <th>Total Frequency</th>
+                                <th>Preference %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="level-preferences-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let charts = {};
+        let currentData = {};
+
+        // Tab management
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Load data for the tab
+            switch(tabName) {
+                case 'overview':
+                    loadOverviewData();
+                    break;
+                case 'sessions':
+                    loadSessionsData();
+                    break;
+                case 'designs':
+                    loadDesignAnalysis();
+                    break;
+                case 'responses':
+                    loadResponseAnalysis();
+                    break;
+                case 'completion':
+                    loadCompletionAnalysis();
+                    break;
+                case 'attributes':
+                    loadAttributeAnalysis();
+                    break;
+            }
+        }
+
+        // Data loading functions
+        async function loadOverviewData() {
+            try {
+                const response = await axios.get('/api/sessions-overview');
+                const data = response.data;
+                
+                // Update stats
+                document.getElementById('total-sessions').textContent = data.total_sessions;
+                document.getElementById('screening-started').textContent = data.completion_stats.screening_started || 0;
+                document.getElementById('tournament-started').textContent = data.completion_stats.tournament_started || 0;
+                document.getElementById('tournament-completed').textContent = data.completion_stats.tournament_completed || 0;
+
+                // Create completion flow chart
+                createCompletionFlowChart(data.completion_stats);
+                
+                // Create recent activity chart
+                createRecentActivityChart(data.recent_sessions);
+                
+                // Update recent sessions table
+                updateRecentSessionsTable(data.recent_sessions);
+                
+            } catch (error) {
+                console.error('Error loading overview data:', error);
+                showError('Failed to load overview data');
+            }
+        }
+
+        async function loadSessionsData() {
+            try {
+                const response = await axios.get('/api/sessions-overview');
+                const data = response.data;
+                
+                const sessionsList = document.getElementById('sessions-list');
+                sessionsList.innerHTML = '';
+                
+                data.recent_sessions.forEach(session => {
+                    const sessionCard = createSessionCard(session);
+                    sessionsList.appendChild(sessionCard);
+                });
+                
+            } catch (error) {
+                console.error('Error loading sessions data:', error);
+                showError('Failed to load sessions data');
+            }
+        }
+
+        async function loadDesignAnalysis() {
+            try {
+                const response = await axios.get('/api/design-analysis');
+                const data = response.data;
+                
+                // Create charts
+                createScreeningConceptsChart(data.screening_concepts);
+                createTournamentConceptsChart(data.tournament_concepts);
+                
+                // Update attribute usage table
+                updateAttributeUsageTable(data.attribute_usage);
+                
+            } catch (error) {
+                console.error('Error loading design analysis:', error);
+                showError('Failed to load design analysis');
+            }
+        }
+
+        async function loadResponseAnalysis() {
+            try {
+                const response = await axios.get('/api/response-analysis');
+                const data = response.data;
+                
+                // Create charts
+                createScreeningResponsesChart(data.screening_responses);
+                createTournamentChoicesChart(data.tournament_choices);
+                
+                // Update concept preferences table
+                updateConceptPreferencesTable(data.concept_preferences);
+                
+            } catch (error) {
+                console.error('Error loading response analysis:', error);
+                showError('Failed to load response analysis');
+            }
+        }
+
+        async function loadCompletionAnalysis() {
+            try {
+                const response = await axios.get('/api/completion-analysis');
+                const data = response.data;
+                
+                // Create charts
+                createSessionStatsChart(data.session_stats);
+                createAvgResponsesChart(data.avg_responses);
+                
+                // Update completion stats table
+                updateCompletionStatsTable(data.completion_flow);
+                
+            } catch (error) {
+                console.error('Error loading completion analysis:', error);
+                showError('Failed to load completion analysis');
+            }
+        }
+
+        async function loadAttributeAnalysis() {
+            try {
+                const response = await axios.get('/api/attribute-analysis');
+                const data = response.data;
+                
+                // Create charts
+                createAttributePreferencesChart(data.level_preferences);
+                createBYOConfigsChart(data.byo_configs);
+                
+                // Update level preferences table
+                updateLevelPreferencesTable(data.level_preferences);
+                
+            } catch (error) {
+                console.error('Error loading attribute analysis:', error);
+                showError('Failed to load attribute analysis');
+            }
+        }
+
+        // Chart creation functions
+        function createCompletionFlowChart(data) {
+            const ctx = document.getElementById('completion-flow-chart').getContext('2d');
+            
+            if (charts.completionFlow) {
+                charts.completionFlow.destroy();
+            }
+            
+            charts.completionFlow = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Total Sessions', 'Screening Started', 'Tournament Started', 'Tournament Completed'],
+                    datasets: [{
+                        data: [
+                            data.total_sessions || 0,
+                            data.screening_started || 0,
+                            data.tournament_started || 0,
+                            data.tournament_completed || 0
+                        ],
+                        backgroundColor: [
+                            '#667eea',
+                            '#48bb78',
+                            '#ed8936',
+                            '#f56565'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createRecentActivityChart(sessions) {
+            const ctx = document.getElementById('recent-activity-chart').getContext('2d');
+            
+            if (charts.recentActivity) {
+                charts.recentActivity.destroy();
+            }
+            
+            const labels = sessions.map((s, index) => `Session ${index + 1}`);
+            const screeningData = sessions.map(s => s.screening_responses || 0);
+            const tournamentData = sessions.map(s => s.tournament_choices || 0);
+            
+            charts.recentActivity = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Screening Responses',
+                        data: screeningData,
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Tournament Choices',
+                        data: tournamentData,
+                        borderColor: '#ed8936',
+                        backgroundColor: 'rgba(237, 137, 54, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function createScreeningConceptsChart(concepts) {
+            const ctx = document.getElementById('screening-concepts-chart').getContext('2d');
+            
+            if (charts.screeningConcepts) {
+                charts.screeningConcepts.destroy();
+            }
+            
+            const labels = concepts.slice(0, 10).map((c, index) => `Concept ${index + 1}`);
+            const data = concepts.slice(0, 10).map(c => c.frequency);
+            
+            charts.screeningConcepts = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: data,
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTournamentConceptsChart(concepts) {
+            const ctx = document.getElementById('tournament-concepts-chart').getContext('2d');
+            
+            if (charts.tournamentConcepts) {
+                charts.tournamentConcepts.destroy();
+            }
+            
+            const labels = concepts.slice(0, 10).map((c, index) => `Concept ${index + 1}`);
+            const data = concepts.slice(0, 10).map(c => c.frequency);
+            
+            charts.tournamentConcepts = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: data,
+                        backgroundColor: '#ed8936'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function createScreeningResponsesChart(responses) {
+            const ctx = document.getElementById('screening-responses-chart').getContext('2d');
+            
+            if (charts.screeningResponses) {
+                charts.screeningResponses.destroy();
+            }
+            
+            charts.screeningResponses = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: responses.map(r => r.response ? 'Yes' : 'No'),
+                    datasets: [{
+                        data: responses.map(r => r.count),
+                        backgroundColor: ['#48bb78', '#f56565']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTournamentChoicesChart(choices) {
+            const ctx = document.getElementById('tournament-choices-chart').getContext('2d');
+            
+            if (charts.tournamentChoices) {
+                charts.tournamentChoices.destroy();
+            }
+            
+            charts.tournamentChoices = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: choices.map(c => `Choice ${c.choice}`),
+                    datasets: [{
+                        label: 'Frequency',
+                        data: choices.map(c => c.count),
+                        backgroundColor: '#ed8936'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function createSessionStatsChart(sessionStats) {
+            const ctx = document.getElementById('session-stats-chart').getContext('2d');
+            
+            if (charts.sessionStats) {
+                charts.sessionStats.destroy();
+            }
+            
+            const labels = sessionStats.map((s, index) => `Session ${index + 1}`);
+            const screeningData = sessionStats.map(s => s.screening_responses || 0);
+            const tournamentData = sessionStats.map(s => s.tournament_choices || 0);
+            
+            charts.sessionStats = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Screening Responses',
+                        data: screeningData,
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Tournament Choices',
+                        data: tournamentData,
+                        borderColor: '#ed8936',
+                        backgroundColor: 'rgba(237, 137, 54, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAvgResponsesChart(avgResponses) {
+            const ctx = document.getElementById('avg-responses-chart').getContext('2d');
+            
+            if (charts.avgResponses) {
+                charts.avgResponses.destroy();
+            }
+            
+            charts.avgResponses = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Screening', 'Tournament', 'Total'],
+                    datasets: [{
+                        label: 'Average Responses',
+                        data: [
+                            avgResponses.avg_screening_responses || 0,
+                            avgResponses.avg_tournament_choices || 0,
+                            avgResponses.avg_total_responses || 0
+                        ],
+                        backgroundColor: ['#48bb78', '#ed8936', '#667eea']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAttributePreferencesChart(levelPreferences) {
+            const ctx = document.getElementById('attribute-preferences-chart').getContext('2d');
+            
+            if (charts.attributePreferences) {
+                charts.attributePreferences.destroy();
+            }
+            
+            // Group by attribute
+            const attributeGroups = {};
+            levelPreferences.forEach(pref => {
+                if (!attributeGroups[pref.attribute]) {
+                    attributeGroups[pref.attribute] = [];
+                }
+                attributeGroups[pref.attribute].push(pref);
+            });
+            
+            const labels = Object.keys(attributeGroups);
+            const datasets = [];
+            const colors = ['#667eea', '#48bb78', '#ed8936', '#f56565', '#9f7aea'];
+            
+            Object.values(attributeGroups).forEach((levels, index) => {
+                datasets.push({
+                    label: levels[0].attribute,
+                    data: levels.map(l => l.preference_percentage),
+                    backgroundColor: colors[index % colors.length]
+                });
+            });
+            
+            charts.attributePreferences = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: levelPreferences.map(p => p.level).slice(0, 10),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        function createBYOConfigsChart(byoConfigs) {
+            const ctx = document.getElementById('byo-configs-chart').getContext('2d');
+            
+            if (charts.byoConfigs) {
+                charts.byoConfigs.destroy();
+            }
+            
+            const labels = byoConfigs.slice(0, 10).map((c, index) => `Config ${index + 1}`);
+            const data = byoConfigs.slice(0, 10).map(c => c.frequency);
+            
+            charts.byoConfigs = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#667eea', '#48bb78', '#ed8936', '#f56565', '#9f7aea',
+                            '#38b2ac', '#ecc94b', '#ed64a6', '#4fd1c7', '#f6ad55'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Table update functions
+        function updateRecentSessionsTable(sessions) {
+            const tbody = document.getElementById('recent-sessions-body');
+            tbody.innerHTML = '';
+            
+            sessions.forEach(session => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${session.id}</td>
+                    <td>${session.screening_tasks_count || 0}</td>
+                    <td>${session.screening_responses || 0}</td>
+                    <td>${session.tournament_tasks_count || 0}</td>
+                    <td>${session.tournament_choices || 0}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateAttributeUsageTable(attributeUsage) {
+            const tbody = document.getElementById('attribute-usage-body');
+            tbody.innerHTML = '';
+            
+            attributeUsage.forEach(usage => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${usage.attribute}</td>
+                    <td>${usage.level}</td>
+                    <td>${usage.frequency}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateConceptPreferencesTable(conceptPreferences) {
+            const tbody = document.getElementById('concept-preferences-body');
+            tbody.innerHTML = '';
+            
+            conceptPreferences.slice(0, 50).forEach(pref => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><div class="concept-display">${JSON.stringify(pref.concept)}</div></td>
+                    <td>${pref.choice}</td>
+                    <td>${pref.frequency}</td>
+                    <td>${pref.preference_percentage}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateCompletionStatsTable(completionFlow) {
+            const tbody = document.getElementById('completion-stats-body');
+            tbody.innerHTML = '';
+            
+            const stages = [
+                { name: 'Total Sessions', count: completionFlow.total_sessions || 0 },
+                { name: 'Screening Started', count: completionFlow.screening_started || 0 },
+                { name: 'Screening Completed', count: completionFlow.screening_completed || 0 },
+                { name: 'Tournament Started', count: completionFlow.tournament_started || 0 },
+                { name: 'Tournament Completed', count: completionFlow.tournament_completed || 0 }
+            ];
+            
+            const total = completionFlow.total_sessions || 1;
+            
+            stages.forEach(stage => {
+                const row = document.createElement('tr');
+                const percentage = ((stage.count / total) * 100).toFixed(1);
+                row.innerHTML = `
+                    <td>${stage.name}</td>
+                    <td>${stage.count}</td>
+                    <td>${percentage}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateLevelPreferencesTable(levelPreferences) {
+            const tbody = document.getElementById('level-preferences-body');
+            tbody.innerHTML = '';
+            
+            levelPreferences.forEach(pref => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${pref.attribute}</td>
+                    <td>${pref.level}</td>
+                    <td>${pref.total_frequency}</td>
+                    <td>${pref.preference_percentage}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Helper functions
+        function createSessionCard(session) {
+            const card = document.createElement('div');
+            card.className = 'session-card';
+            card.onclick = () => showSessionDetails(session.id);
+            
+            card.innerHTML = `
+                <div class="session-header">
+                    <div class="session-id">${session.id}</div>
+                    <div class="session-date">Session ID</div>
+                </div>
+                <div class="session-stats">
+                    <div class="session-stat">
+                        <div class="session-stat-value">${session.screening_tasks_count || 0}</div>
+                        <div class="session-stat-label">Screening Tasks</div>
+                    </div>
+                    <div class="session-stat">
+                        <div class="session-stat-value">${session.screening_responses || 0}</div>
+                        <div class="session-stat-label">Screening Responses</div>
+                    </div>
+                    <div class="session-stat">
+                        <div class="session-stat-value">${session.tournament_tasks_count || 0}</div>
+                        <div class="session-stat-label">Tournament Tasks</div>
+                    </div>
+                    <div class="session-stat">
+                        <div class="session-stat-value">${session.tournament_choices || 0}</div>
+                        <div class="session-stat-label">Tournament Choices</div>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function showSessionDetails(sessionId) {
+            // This could open a modal or navigate to a detailed view
+            alert(`Session details for ${sessionId} - Feature coming soon!`);
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.querySelector('.container').insertBefore(errorDiv, document.querySelector('.header').nextSibling);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        // Export functionality
+        async function exportData() {
+            try {
+                const response = await axios.get('/api/export-data');
+                const data = response.data;
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `acbc-data-export-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showError('Failed to export data');
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOverviewData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+                const activeTab = document.querySelector('.tab-content.active');
+                if (activeTab.id === 'overview') {
+                    loadOverviewData();
+                }
+            }, 30000);
+        });
+    </script>
+</body>
+</html> 
