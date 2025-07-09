@@ -83,6 +83,14 @@ async def record_choice(db: AsyncSession, sid: str, task_number: int, choice_id:
     else:
         task = tasks[0]
     
+    # Debug: Check the concepts structure
+    if not task.concepts:
+        raise ValueError(f"No concepts found in tournament task for session {sid}, task {task_number}")
+    
+    # Ensure concepts is a list
+    if not isinstance(task.concepts, list):
+        raise ValueError(f"Concepts should be a list, but got {type(task.concepts)}: {task.concepts}")
+    
     # Validate that choice_id is within the range of available concepts
     if choice_id < 0 or choice_id >= len(task.concepts):
         raise ValueError(f"Invalid choice_id {choice_id}. Must be between 0 and {len(task.concepts) - 1}")
@@ -92,8 +100,18 @@ async def record_choice(db: AsyncSession, sid: str, task_number: int, choice_id:
     
     # Update utilities based on the chosen concept
     session = await get_session(db, sid)
-    chosen_concept = task.concepts[choice_id]["attributes"]  # Extract attributes from concept with ID
-    session.utilities = utils.adaptive_update(session.utilities or {}, chosen_concept)
+    
+    try:
+        # Handle both old and new concept structures
+        chosen_concept = task.concepts[choice_id]
+        if isinstance(chosen_concept, dict) and "attributes" in chosen_concept:
+            # New structure: {"id": 0, "attributes": {...}}
+            chosen_concept = chosen_concept["attributes"]
+        # Old structure: direct concept object
+        
+        session.utilities = utils.adaptive_update(session.utilities or {}, chosen_concept)
+    except Exception as e:
+        raise ValueError(f"Error processing concept {choice_id}: {str(e)}. Concepts structure: {task.concepts}")
     
     await db.commit()
     return task_number + 1
