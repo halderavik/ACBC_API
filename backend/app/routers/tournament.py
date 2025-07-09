@@ -44,8 +44,10 @@ async def tournament_choice(
         concepts = await get_tournament(db, session_id, task_number)
         return {"task_number": task_number, "concepts": concepts}
         
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.get("/choice/{path:path}")
 async def tournament_choice_catch_all(

@@ -295,14 +295,14 @@ Submits a choice response and updates utility estimates.
 **Parameters:**
 - `session_id` (required): The session ID
 - `task_number` (required): Current task number
-- `selected_concept_id` (required): ID of the chosen concept
+- `selected_concept_id` (required): ID of the chosen concept (0, 1, 2, etc.)
 
 **Example Request:**
 ```json
 {
   "session_id": "test123",
   "task_number": 1,
-  "selected_concept_id": 1
+  "selected_concept_id": 0
 }
 ```
 
@@ -318,9 +318,15 @@ Submits a choice response and updates utility estimates.
 - Updates utility estimates using adaptive algorithms
 - Returns the next task number
 
+**Important Notes:**
+- `selected_concept_id` must be a valid index into the concepts array (0, 1, 2, etc.)
+- The concept IDs correspond to the order in the concepts array returned by the tournament choice endpoint
+- For sessions with legacy data structure, only concept ID 0 may be available initially
+
 **Error Responses:**
+- `400 Bad Request`: Invalid concept ID (e.g., "Invalid choice_id 1. Must be between 0 and 0")
 - `404 Not Found`: Session or task not found
-- `422 Unprocessable Entity`: Invalid concept ID
+- `422 Unprocessable Entity`: Invalid request format
 
 ---
 
@@ -462,7 +468,7 @@ curl -X POST "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/to
   -d '{
     "session_id": "example123",
     "task_number": 1,
-    "selected_concept_id": 1
+    "selected_concept_id": 0
   }'
 ```
 
@@ -521,6 +527,41 @@ A: Currently, the API focuses on the choice process. Utility estimates are used 
 ### Q: Is the API stateless?
 A: No, the API maintains session state in the database throughout the workflow.
 
+### Q: What if I get "Invalid choice_id" errors?
+A: The `selected_concept_id` must be a valid index (0, 1, 2, etc.) into the concepts array. Check the tournament choice response to see available concept IDs.
+
+### Q: What if I get "Multiple rows were found" errors?
+A: This indicates duplicate tournament tasks in the database. The API now handles this automatically, but you may need to use concept ID 0 for legacy sessions.
+
+---
+
+## Troubleshooting
+
+### Common Error Messages
+
+**"Invalid choice_id X. Must be between 0 and Y"**
+- **Cause**: Trying to select a concept ID that doesn't exist
+- **Solution**: Use a valid concept ID (0, 1, 2, etc.) based on the concepts returned by the tournament choice endpoint
+
+**"Multiple rows were found when one or none was required"**
+- **Cause**: Duplicate tournament tasks in the database (legacy data issue)
+- **Solution**: The API now handles this automatically. Use concept ID 0 for existing sessions
+
+**"Concepts should be a list, but got <class 'dict'>"**
+- **Cause**: Legacy data structure where concepts were stored as single objects
+- **Solution**: The API now automatically converts old data structure to new format
+
+**"Tournament task not found for session X, task Y"**
+- **Cause**: No tournament task exists for the specified session and task number
+- **Solution**: Ensure you've completed the screening phase and the tournament task exists
+
+### Data Structure Compatibility
+
+The API is backward-compatible with legacy data structures:
+- **Old Structure**: Single concept stored as dictionary
+- **New Structure**: List of concepts with IDs and attributes
+- **Automatic Conversion**: Old data is automatically converted to new format
+
 ---
 
 ## Support
@@ -536,7 +577,15 @@ For technical support or questions about the API:
 
 ## Version Information
 
-- **API Version**: 1.0.0
+- **API Version**: 1.1.0
 - **Framework**: FastAPI
 - **Database**: PostgreSQL
-- **Deployment**: Heroku 
+- **Deployment**: Heroku
+- **Last Updated**: December 2024
+
+### Recent Updates (v1.1.0)
+- ✅ Fixed tournament choice response handling for legacy data structures
+- ✅ Improved error handling with detailed error messages
+- ✅ Added backward compatibility for old tournament task formats
+- ✅ Enhanced duplicate tournament task handling
+- ✅ Updated concept ID validation and processing 
