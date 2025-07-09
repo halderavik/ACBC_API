@@ -87,9 +87,13 @@ async def record_choice(db: AsyncSession, sid: str, task_number: int, choice_id:
     if not task.concepts:
         raise ValueError(f"No concepts found in tournament task for session {sid}, task {task_number}")
     
-    # Ensure concepts is a list
-    if not isinstance(task.concepts, list):
-        raise ValueError(f"Concepts should be a list, but got {type(task.concepts)}: {task.concepts}")
+    # Handle both old and new data structures
+    if isinstance(task.concepts, dict):
+        # Old structure: single concept stored as dict
+        # Convert to new structure for compatibility
+        task.concepts = [{"id": 0, "attributes": task.concepts}]
+    elif not isinstance(task.concepts, list):
+        raise ValueError(f"Concepts should be a list or dict, but got {type(task.concepts)}: {task.concepts}")
     
     # Validate that choice_id is within the range of available concepts
     if choice_id < 0 or choice_id >= len(task.concepts):
