@@ -45,15 +45,16 @@ async def get_tournament(db: AsyncSession, sid: str, task_number: int, nso: int 
     session = await get_session(db, sid)
     
     # Check if tournament task already exists for this session and task number
-    existing_task = await db.execute(
+    existing_tasks = await db.execute(
         select(models.TournamentTask)
         .where(models.TournamentTask.session_id == sid)
         .where(models.TournamentTask.task_number == task_number)
     )
-    existing_task = existing_task.scalar_one_or_none()
+    existing_tasks = existing_tasks.scalars().all()
     
-    if existing_task:
-        # Return existing concepts if task already exists
+    if existing_tasks:
+        # Return existing concepts if task already exists (use the first one if multiple)
+        existing_task = existing_tasks[0]
         return existing_task.concepts
     
     # Generate new concepts if task doesn't exist
