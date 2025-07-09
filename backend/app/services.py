@@ -66,16 +66,21 @@ async def get_tournament(db: AsyncSession, sid: str, task_number: int, nso: int 
     return concepts
 
 async def record_choice(db: AsyncSession, sid: str, task_number: int, choice_id: int):
-    # Find the tournament task for this session and task number
     result = await db.execute(
         select(models.TournamentTask)
         .where(models.TournamentTask.session_id == sid)
         .where(models.TournamentTask.task_number == task_number)
     )
-    task = result.scalar_one_or_none()
-    
-    if not task:
+    tasks = result.scalars().all()
+    if not tasks:
         raise ValueError(f"Tournament task not found for session {sid}, task {task_number}")
+    if len(tasks) > 1:
+        # Log a warning or handle cleanup as needed
+        # For now, pick the first one
+        # Optionally, you could delete duplicates here
+        task = tasks[0]
+    else:
+        task = tasks[0]
     
     # Validate that choice_id is within the range of available concepts
     if choice_id < 0 or choice_id >= len(task.concepts):
