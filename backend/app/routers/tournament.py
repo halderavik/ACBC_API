@@ -88,7 +88,14 @@ async def tournament_choice_catch_all(
 
 @router.post("/choice-response")
 async def choice_response(resp: ChoiceResponseIn, db: AsyncSession = Depends(get_db)):
-    if not await get_session(db, resp.session_id):
-        raise HTTPException(404, "Session not found")
-    next_task = await record_choice(db, resp.session_id, resp.task_number, resp.selected_concept_id)
-    return {"next_task": next_task}
+    try:
+        if not await get_session(db, resp.session_id):
+            raise HTTPException(404, "Session not found")
+        
+        next_task = await record_choice(db, resp.session_id, resp.task_number, resp.selected_concept_id)
+        return {"next_task": next_task}
+        
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"Internal server error: {str(e)}")

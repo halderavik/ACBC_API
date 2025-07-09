@@ -43,23 +43,51 @@ async def record_screening_responses(db: AsyncSession, sid: str, responses: List
 
 async def get_tournament(db: AsyncSession, sid: str, task_number: int, nso: int = 3):
     session = await get_session(db, sid)
+    
+    # Check if tournament task already exists for this session and task number
+    existing_task = await db.execute(
+        select(models.TournamentTask)
+        .where(models.TournamentTask.session_id == sid)
+        .where(models.TournamentTask.task_number == task_number)
+    )
+    existing_task = existing_task.scalar_one_or_none()
+    
+    if existing_task:
+        # Return existing concepts if task already exists
+        return existing_task.concepts
+    
+    # Generate new concepts if task doesn't exist
     concepts = utils.generate_tournament_set(session.utilities or {}, session.byo_config, task_number, nso)
-    for concept in concepts:
-        db.add(models.TournamentTask(session_id=sid, task_number=task_number, concepts=concept))
+    
+    # Store the concepts array in the database
+    db.add(models.TournamentTask(session_id=sid, task_number=task_number, concepts=concepts))
     await db.commit()
+    
     return concepts
 
 async def record_choice(db: AsyncSession, sid: str, task_number: int, choice_id: int):
+    # Find the tournament task for this session and task number
     result = await db.execute(
         select(models.TournamentTask)
-        .where(models.TournamentTask.session_id==sid)
-        .where(models.TournamentTask.task_number==task_number)
-        .where(models.TournamentTask.id==choice_id)
+        .where(models.TournamentTask.session_id == sid)
+        .where(models.TournamentTask.task_number == task_number)
     )
-    task = result.scalar_one()
+    task = result.scalar_one_or_none()
+    
+    if not task:
+        raise ValueError(f"Tournament task not found for session {sid}, task {task_number}")
+    
+    # Validate that choice_id is within the range of available concepts
+    if choice_id < 0 or choice_id >= len(task.concepts):
+        raise ValueError(f"Invalid choice_id {choice_id}. Must be between 0 and {len(task.concepts) - 1}")
+    
+    # Record the choice (choice_id is the index into the concepts array)
     task.choice = choice_id
-    # update utilities
+    
+    # Update utilities based on the chosen concept
     session = await get_session(db, sid)
-    session.utilities = utils.adaptive_update(session.utilities or {}, task.concepts)
+    chosen_concept = task.concepts[choice_id]["attributes"]  # Extract attributes from concept with ID
+    session.utilities = utils.adaptive_update(session.utilities or {}, chosen_concept)
+    
     await db.commit()
     return task_number + 1
