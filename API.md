@@ -27,7 +27,7 @@ The ACBC API includes a comprehensive monitoring dashboard for tracking API acti
 cd dashboard
 pip install -r requirements.txt
 python generate_sample_data.py  # Optional: Generate demo data
-python app.py
+hypercorn app:app --bind 0.0.0.0:5000  # Use Hypercorn for async support
 ```
 
 **Integration with API:**
@@ -43,6 +43,45 @@ app.middleware("http")(monitoring_middleware)
 
 For detailed dashboard documentation, see [dashboard/README.md](./dashboard/README.md).
 
+## 📊 Data Analysis Dashboard
+
+The ACBC API also includes a comprehensive data analysis dashboard for viewing and analyzing all collected data.
+
+**Data Analysis Dashboard URL:** `http://localhost:5001` (when running locally)
+
+**Features:**
+- **Session Overview**: Total sessions, completion rates, recent activity
+- **Session Details**: Individual session analysis and progress tracking
+- **Design Analysis**: Screening and tournament concept analysis
+- **Response Analysis**: Respondent choices and preference analysis
+- **Completion Analysis**: Session completion flow and time analysis
+- **Attribute Analysis**: Attribute preferences and utility analysis
+- **Interactive Charts**: Chart.js visualizations for all data types
+- **Real-time Data**: Direct connection to production database
+- **Export Functionality**: JSON export of all collected data
+- **Responsive Design**: Works on desktop and mobile devices
+
+**Data Analysis Dashboard Setup:**
+```bash
+cd data_analysis_dashboard
+pip install -r requirements.txt
+hypercorn app:app --bind 0.0.0.0:5001  # Use Hypercorn for async support
+```
+
+**Quick Start (Windows):**
+```bash
+cd data_analysis_dashboard
+start_dashboard.bat
+```
+
+**Quick Start (Python):**
+```bash
+cd data_analysis_dashboard
+python start_dashboard.py
+```
+
+For detailed data analysis dashboard documentation, see [data_analysis_dashboard/README.md](./data_analysis_dashboard/README.md).
+
 ---
 
 ## Table of Contents
@@ -56,6 +95,8 @@ For detailed dashboard documentation, see [dashboard/README.md](./dashboard/READ
 7. [Data Models](#data-models)
 8. [Examples](#examples)
 9. [Monitoring Dashboard](#monitoring-dashboard)
+10. [Data Analysis Dashboard](#data-analysis-dashboard)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -555,12 +596,124 @@ A: This indicates duplicate tournament tasks in the database. The API now handle
 - **Cause**: No tournament task exists for the specified session and task number
 - **Solution**: Ensure you've completed the screening phase and the tournament task exists
 
+### Dashboard Issues
+
+**"RuntimeError: Install Flask with the 'async' extra in order to use async views"**
+- **Cause**: Running Flask app with async views using the default development server
+- **Solution**: Use Hypercorn ASGI server instead of `python app.py`
+  ```bash
+  # Instead of: python app.py
+  # Use: hypercorn app:app --bind 0.0.0.0:5000
+  ```
+
+**"ModuleNotFoundError: No module named 'hypercorn'"**
+- **Cause**: Hypercorn not installed in virtual environment
+- **Solution**: Install requirements with async Flask support
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+**"Database connection failed"**
+- **Cause**: Database URL not configured or database not accessible
+- **Solution**: 
+  1. Check DATABASE_URL environment variable
+  2. Ensure PostgreSQL is running
+  3. Verify database credentials
+  4. Test connection with `python test_connection.py`
+
+**"Port already in use"**
+- **Cause**: Another application is using the same port
+- **Solution**: 
+  1. Stop other applications using the port
+  2. Use a different port: `hypercorn app:app --bind 0.0.0.0:5002`
+
+### Data Analysis Dashboard Issues
+
+**"500 Internal Server Error on /api/sessions-overview"**
+- **Cause**: Async Flask views not properly configured
+- **Solution**: 
+  1. Ensure using Hypercorn: `hypercorn app:app --bind 0.0.0.0:5001`
+  2. Check Flask version: `pip show flask` (should be 3.1.1+)
+  3. Verify async support: `pip show flask[async]`
+
+**"NumPy/Pandas version mismatch"**
+- **Cause**: Incompatible versions of NumPy and Pandas
+- **Solution**: Update to compatible versions
+  ```bash
+  pip install "pandas>=2.2.0" "numpy>=2.0.0" --upgrade
+  ```
+
+**"No data displayed in charts"**
+- **Cause**: No data in database or connection issues
+- **Solution**:
+  1. Check database connection
+  2. Verify data exists in production database
+  3. Test with sample data generation
+
 ### Data Structure Compatibility
 
 The API is backward-compatible with legacy data structures:
 - **Old Structure**: Single concept stored as dictionary
 - **New Structure**: List of concepts with IDs and attributes
 - **Automatic Conversion**: Old data is automatically converted to new format
+
+### Performance Issues
+
+**"Slow dashboard loading"**
+- **Cause**: Large datasets or inefficient queries
+- **Solution**:
+  1. Check database query performance
+  2. Consider adding database indexes
+  3. Implement caching for frequently accessed data
+
+**"High memory usage"**
+- **Cause**: Large datasets loaded into memory
+- **Solution**:
+  1. Implement pagination for large datasets
+  2. Use streaming responses for data export
+  3. Optimize database queries
+
+### Development Environment Issues
+
+**"Virtual environment not found"**
+- **Cause**: Virtual environment not created or activated
+- **Solution**:
+  ```bash
+  python -m venv venv
+  venv\Scripts\activate  # Windows
+  source venv/bin/activate  # macOS/Linux
+  pip install -r requirements.txt
+  ```
+
+**"Permission denied" (Windows)**
+- **Cause**: PowerShell execution policy restrictions
+- **Solution**:
+  ```powershell
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  ```
+
+**"Module not found" errors**
+- **Cause**: Dependencies not installed in virtual environment
+- **Solution**:
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+### Production Deployment Issues
+
+**"Heroku deployment failed"**
+- **Cause**: Build errors or missing dependencies
+- **Solution**:
+  1. Check Heroku logs: `heroku logs --tail`
+  2. Verify requirements.txt includes all dependencies
+  3. Ensure Procfile is correctly configured
+
+**"Database migration errors"**
+- **Cause**: Schema changes not applied to production database
+- **Solution**:
+  ```bash
+  heroku run alembic upgrade head
+  ```
 
 ---
 
@@ -572,20 +725,34 @@ For technical support or questions about the API:
 2. Review the error messages for specific issues
 3. Ensure all required parameters are provided
 4. Verify the request format matches the expected schema
+5. Test with the provided examples
+6. Check the troubleshooting section above
+
+### Getting Help
+
+1. **API Issues**: Check the interactive docs and error messages
+2. **Dashboard Issues**: Verify async Flask setup and database connection
+3. **Deployment Issues**: Check Heroku logs and configuration
+4. **Data Issues**: Use the data analysis dashboard to inspect data
 
 ---
 
 ## Version Information
 
-- **API Version**: 1.1.0
+- **API Version**: 1.2.0
 - **Framework**: FastAPI
 - **Database**: PostgreSQL
 - **Deployment**: Heroku
 - **Last Updated**: December 2024
 
-### Recent Updates (v1.1.0)
-- ✅ Fixed tournament choice response handling for legacy data structures
-- ✅ Improved error handling with detailed error messages
-- ✅ Added backward compatibility for old tournament task formats
+### Recent Updates (v1.2.0)
+- ✅ Added comprehensive data analysis dashboard
+- ✅ Updated both dashboards to Flask 3.x with async support
+- ✅ Added Hypercorn ASGI server for proper async Flask support
+- ✅ Updated all dependencies to latest compatible versions
+- ✅ Enhanced .gitignore with comprehensive patterns
+- ✅ Added startup scripts for easy dashboard deployment
+- ✅ Improved error handling and troubleshooting documentation
+- ✅ Added backward compatibility for legacy data structures
 - ✅ Enhanced duplicate tournament task handling
 - ✅ Updated concept ID validation and processing 

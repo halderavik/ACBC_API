@@ -27,6 +27,9 @@ env/
 ENV/
 env.bak/
 venv.bak/
+data_analysis_dashboard/venv/
+dashboard/venv/
+backend/venv/
 
 # Environment Variables
 .env
@@ -39,6 +42,8 @@ venv.bak/
 *.db
 *.sqlite
 *.sqlite3
+dashboard/monitor.db
+data_analysis_dashboard/data.db
 
 # IDE
 .vscode/
@@ -59,6 +64,8 @@ Thumbs.db
 # Logs
 *.log
 logs/
+dashboard/logs/
+data_analysis_dashboard/logs/
 
 # Alembic
 alembic/versions/*.py
@@ -69,4 +76,75 @@ alembic/versions/*.py
 htmlcov/
 
 # pytest
-.pytest_cache/ 
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Heroku
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Node modules (if any frontend components)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Data files
+*.csv
+*.xlsx
+*.xls
+data_analysis_dashboard/data/
+dashboard/data/
+
+# Generated files
+data_analysis_dashboard/generated/
+dashboard/generated/ 

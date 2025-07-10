@@ -25,11 +25,35 @@ A FastAPI-based backend service for implementing Adaptive Choice-Based Conjoint 
 cd dashboard
 pip install -r requirements.txt
 python generate_sample_data.py  # Optional: Generate demo data
-python app.py
+hypercorn app:app --bind 0.0.0.0:5000  # Use Hypercorn for async support
 ```
 Then open `http://localhost:5000` in your browser.
 
 **Dashboard Documentation:** [dashboard/README.md](./dashboard/README.md)
+
+## 📊 Data Analysis Dashboard
+
+**Data Analysis Features:**
+- **Session Overview**: Total sessions, completion rates, recent activity
+- **Session Details**: Individual session analysis and progress tracking
+- **Design Analysis**: Screening and tournament concept analysis
+- **Response Analysis**: Respondent choices and preference analysis
+- **Completion Analysis**: Session completion flow and time analysis
+- **Attribute Analysis**: Attribute preferences and utility analysis
+- **Interactive Charts**: Chart.js visualizations for all data types
+- **Real-time Data**: Direct connection to production database
+- **Export Functionality**: JSON export of all collected data
+- **Responsive Design**: Works on desktop and mobile devices
+
+**Data Analysis Dashboard Setup:**
+```bash
+cd data_analysis_dashboard
+pip install -r requirements.txt
+hypercorn app:app --bind 0.0.0.0:5001  # Use Hypercorn for async support
+```
+Then open `http://localhost:5001` in your browser.
+
+**Data Analysis Documentation:** [data_analysis_dashboard/README.md](./data_analysis_dashboard/README.md)
 
 ## 🏗️ Architecture Overview
 
@@ -53,11 +77,18 @@ ACBC/
 │   ├── requirements.txt         # Python dependencies
 │   └── .env                     # Environment configuration
 ├── dashboard/                   # Monitoring dashboard
-│   ├── app.py                   # Flask dashboard application
+│   ├── app.py                   # Flask dashboard application (async)
 │   ├── templates/               # HTML templates
 │   ├── monitor_middleware.py    # FastAPI monitoring middleware
 │   ├── generate_sample_data.py  # Sample data generator
 │   └── requirements.txt         # Dashboard dependencies
+├── data_analysis_dashboard/     # Data analysis dashboard
+│   ├── app.py                   # Flask data analysis application (async)
+│   ├── templates/               # HTML templates
+│   ├── test_connection.py       # Database connection test
+│   ├── start_dashboard.py       # Dashboard startup script
+│   ├── start_dashboard.bat      # Windows startup script
+│   └── requirements.txt         # Data analysis dependencies
 ├── requirements.txt             # Root requirements for Heroku
 ├── Procfile                     # Heroku process configuration
 ├── runtime.txt                  # Python version specification
@@ -79,6 +110,8 @@ ACBC/
 - **Complete API Documentation**: Interactive docs and comprehensive guides
 - **Real-time Monitoring**: Comprehensive dashboard for API activity tracking
 - **Visual Analytics**: Charts and graphs for performance insights
+- **Data Analysis**: Complete data viewing and analysis dashboard
+- **Async Flask Support**: Both dashboards use Flask 3.x with async support
 
 ## 📋 Prerequisites
 
@@ -246,10 +279,12 @@ The project includes the following Heroku-specific files:
 ### Environment Variables on Heroku
 
 Heroku automatically provides:
+
 - `DATABASE_URL`: PostgreSQL connection string
 - `PORT`: Port number for the application
 
 You can set additional variables:
+
 ```bash
 heroku config:set SECRET_KEY=your-secret-key
 heroku config:set DEBUG=False
@@ -260,11 +295,13 @@ heroku config:set DEBUG=False
 ### Quick Test with curl
 
 #### 1. Health Check
+
 ```bash
 curl https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/
 ```
 
 #### 2. Create BYO Configuration
+
 ```bash
 curl -X POST "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/byo-config" \
   -H "Content-Type: application/json" \
@@ -279,13 +316,14 @@ curl -X POST "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/by
 ```
 
 #### 3. Get Screening Design
+
 ```bash
 curl "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/screening/design?session_id=test123"
 ```
 
 ### Using Postman
 
-1. Import the API collection from the examples in [API.md](./API.md)
+1. Import the API collection from the examples in API.md
 2. Set the base URL to: `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com`
 3. Test each endpoint sequentially
 
@@ -293,20 +331,20 @@ curl "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/screening/
 
 ### Complete Documentation
 
-- **[API.md](./API.md)**: Comprehensive API documentation with examples
-- **[Interactive Docs](https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/docs)**: Swagger UI for real-time testing
+- **API.md**: Comprehensive API documentation with examples
+- **Interactive Docs**: Swagger UI for real-time testing
 
 ### Available Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Health check and API info |
-| GET | `/health` | Health check for Heroku |
-| POST | `/api/byo-config` | Create BYO configuration |
-| GET | `/api/screening/design` | Get screening design |
-| POST | `/api/screening/responses` | Submit screening responses |
-| GET | `/api/tournament/choice` | Get tournament choice tasks |
-| POST | `/api/tournament/choice-response` | Submit choice response |
+| Method | Endpoint                        | Description                 |
+| ------ | ------------------------------- | --------------------------- |
+| GET    | /                               | Health check and API info   |
+| GET    | /health                         | Health check for Heroku     |
+| POST   | /api/byo-config                 | Create BYO configuration    |
+| GET    | /api/screening/design           | Get screening design        |
+| POST   | /api/screening/responses        | Submit screening responses  |
+| GET    | /api/tournament/choice          | Get tournament choice tasks |
+| POST   | /api/tournament/choice-response | Submit choice response      |
 
 ## 🔧 Development
 
@@ -365,6 +403,8 @@ The application uses the following main tables:
 - **Health Check Endpoints**: `/` and `/health` for monitoring
 - **Error Logging**: Comprehensive error handling and logging
 - **Database Monitoring**: Alembic migration tracking
+- **Real-time Dashboard**: Live monitoring of API activity
+- **Data Analysis Dashboard**: Comprehensive data viewing and analysis
 
 ## 🤝 Contributing
 
@@ -382,16 +422,28 @@ This project is licensed under the MIT License.
 
 For support and questions:
 
-1. Check the [API Documentation](./API.md)
-2. Visit the [Interactive Docs](https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/docs)
+1. Check the API Documentation
+2. Visit the Interactive Docs
 3. Review the error messages in the API responses
 4. Check the deployment logs: `heroku logs --tail`
 
 ## 📈 Future Enhancements
 
-- [ ] Authentication and authorization
-- [ ] Rate limiting
-- [ ] Advanced analytics endpoints
-- [ ] Export functionality for results
-- [ ] Real-time collaboration features
-- [ ] Mobile app support 
+- Authentication and authorization
+- Rate limiting
+- Advanced analytics endpoints
+- Export functionality for results
+- Real-time collaboration features
+- Mobile app support
+- Advanced filtering in data analysis dashboard
+- Comparative analysis features
+- Predictive analytics capabilities
+- Data export in multiple formats (CSV, Excel)
+
+## About
+
+No description, website, or topics provided.
+
+### Resources
+
+Readme 
