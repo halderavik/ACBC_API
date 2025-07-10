@@ -38,11 +38,21 @@ async def record_screening_responses(db: AsyncSession, sid: str, responses: List
     tasks = result.scalars().all()
     for task, resp in zip(tasks, responses):
         task.response = resp
-    utils.estimate_initial_utilities(responses, [t.concept for t in tasks])
+    
+    # Get the session to update utilities
+    session = await get_session(db, sid)
+    if session:
+        # Estimate initial utilities and store them in the session
+        utilities = utils.estimate_initial_utilities(responses, [t.concept for t in tasks])
+        session.utilities = utilities
+    
     await db.commit()
 
 async def get_tournament(db: AsyncSession, sid: str, task_number: int, nso: int = 3):
     session = await get_session(db, sid)
+    
+    if not session:
+        raise ValueError(f"Session {sid} not found")
     
     # Check if tournament task already exists for this session and task number
     existing_tasks = await db.execute(
@@ -58,7 +68,14 @@ async def get_tournament(db: AsyncSession, sid: str, task_number: int, nso: int 
         return existing_task.concepts
     
     # Generate new concepts if task doesn't exist
-    concepts = utils.generate_tournament_set(session.utilities or {}, session.byo_config, task_number, nso)
+    # Ensure utilities is not None and byo_config exists
+    utilities = session.utilities or {}
+    byo_config = session.byo_config or {}
+    
+    if not byo_config:
+        raise ValueError(f"No BYO configuration found for session {sid}")
+    
+    concepts = utils.generate_tournament_set(utilities, byo_config, task_number, nso)
     
     # Store the concepts array in the database
     db.add(models.TournamentTask(session_id=sid, task_number=task_number, concepts=concepts))
