@@ -41,7 +41,7 @@ Then open `http://localhost:5000` in your browser.
 - **Completion Analysis**: Session completion flow and time analysis
 - **Attribute Analysis**: Attribute preferences and utility analysis
 - **Interactive Charts**: Chart.js visualizations for all data types
-- **Real-time Data**: Direct connection to production database
+- **Real-time Data**: Direct connection to production Heroku database
 - **Export Functionality**: JSON export of all collected data
 - **Responsive Design**: Works on desktop and mobile devices
 
@@ -49,11 +49,24 @@ Then open `http://localhost:5000` in your browser.
 ```bash
 cd data_analysis_dashboard
 pip install -r requirements.txt
+# Configure .env file with Heroku DATABASE_URL (see Configuration section)
 hypercorn app:app --bind 0.0.0.0:5001 --workers 1  # Use Hypercorn for async support
 ```
 Then open `http://localhost:5001` in your browser.
 
 **Data Analysis Documentation:** [data_analysis_dashboard/README.md](./data_analysis_dashboard/README.md)
+
+**Quick Start (Windows):**
+```bash
+cd data_analysis_dashboard
+start_dashboard.bat
+```
+
+**Quick Start (Python):**
+```bash
+cd data_analysis_dashboard
+python start_dashboard.py
+```
 
 ## 🏗️ Architecture Overview
 
@@ -88,6 +101,7 @@ ACBC/
 │   ├── test_connection.py       # Database connection test
 │   ├── start_dashboard.py       # Dashboard startup script
 │   ├── start_dashboard.bat      # Windows startup script
+│   ├── .env                     # Environment configuration (Heroku DB)
 │   └── requirements.txt         # Data analysis dependencies
 ├── requirements.txt             # Root requirements for Heroku
 ├── Procfile                     # Heroku process configuration
@@ -110,14 +124,15 @@ ACBC/
 - **Complete API Documentation**: Interactive docs and comprehensive guides
 - **Real-time Monitoring**: Comprehensive dashboard for API activity tracking
 - **Visual Analytics**: Charts and graphs for performance insights
-- **Data Analysis**: Complete data viewing and analysis dashboard
+- **Data Analysis**: Complete data viewing and analysis dashboard with production data
 - **Async Flask Support**: Both dashboards use Flask 3.x with async support
 
 ## 📋 Prerequisites
 
 - Python 3.11+
-- PostgreSQL 12+
+- PostgreSQL 12+ (for local development)
 - pip (Python package manager)
+- Access to Heroku database (for data analysis dashboard)
 
 ## 🛠️ Installation & Setup
 
@@ -198,6 +213,54 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 The API will be available at `http://localhost:8000`
 
+### Data Analysis Dashboard Setup
+
+The data analysis dashboard connects directly to the production Heroku database to provide real-time analysis of live data.
+
+#### 1. Navigate to Dashboard Directory
+
+```bash
+cd data_analysis_dashboard
+```
+
+#### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+#### 3. Configure Environment
+
+The dashboard comes pre-configured with the Heroku database connection. The `.env` file contains:
+
+```env
+# Heroku Production Database
+DATABASE_URL=postgresql://your-heroku-db-url-here
+API_BASE_URL=https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com
+PORT=5001
+```
+
+#### 4. Start the Dashboard
+
+**Option A: Using startup script (Recommended)**
+```bash
+python start_dashboard.py
+```
+
+**Option B: Direct start**
+```bash
+hypercorn app:app --bind 0.0.0.0:5001 --workers 1
+```
+
+**Option C: Windows users**
+```bash
+start_dashboard.bat
+```
+
+#### 5. Access the Dashboard
+
+Open your browser and navigate to `http://localhost:5001`
+
 ## ☁️ Heroku Deployment
 
 ### Current Deployment Status
@@ -206,6 +269,7 @@ The API will be available at `http://localhost:8000`
 ✅ **PostgreSQL Database** configured and running  
 ✅ **Database Migrations** applied  
 ✅ **All API Endpoints** tested and working  
+✅ **Data Analysis Dashboard** connected to production database  
 
 **Live Application:** `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com`
 
@@ -327,6 +391,15 @@ curl "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/screening/
 2. Set the base URL to: `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com`
 3. Test each endpoint sequentially
 
+### Testing with PowerShell Script
+
+A comprehensive test script is available for testing the full ACBC workflow:
+
+```bash
+# Run the test script (generates 5 respondents with smartphone data)
+python test_acbc_survey_slow.ps1
+```
+
 ## 📚 API Documentation
 
 ### Complete Documentation
@@ -404,7 +477,7 @@ The application uses the following main tables:
 - **Error Logging**: Comprehensive error handling and logging
 - **Database Monitoring**: Alembic migration tracking
 - **Real-time Dashboard**: Live monitoring of API activity
-- **Data Analysis Dashboard**: Comprehensive data viewing and analysis
+- **Data Analysis Dashboard**: Comprehensive data viewing and analysis with production data
 
 ## 🤝 Contributing
 

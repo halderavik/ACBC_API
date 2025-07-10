@@ -2,6 +2,8 @@
 
 A comprehensive data viewing and analyzing dashboard for the ACBC (Adaptive Choice-Based Conjoint) system that shows all collected data based on session data storage, designs shown, all options presented at all stages of the process, and corresponding selections by respondents.
 
+**🔄 Updated**: This dashboard now connects directly to the **Heroku production database** to provide real-time analysis of live data.
+
 ## 🎯 Features
 
 ### 📊 Overview Dashboard
@@ -44,8 +46,8 @@ A comprehensive data viewing and analyzing dashboard for the ACBC (Adaptive Choi
 
 ### Prerequisites
 - Python 3.8+
-- PostgreSQL database with ACBC data
-- Access to the main ACBC API database
+- Access to the Heroku production database
+- No local PostgreSQL required (connects to production)
 
 ### Installation
 
@@ -59,21 +61,30 @@ A comprehensive data viewing and analyzing dashboard for the ACBC (Adaptive Choi
    pip install -r requirements.txt
    ```
 
-3. **Set environment variables**:
-   ```bash
-   # Database connection (use your actual database URL)
-   export DATABASE_URL="postgresql://username:password@localhost/acbc_db"
-   
-   # API base URL (optional, for additional features)
-   export API_BASE_URL="https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com"
-   
-   # Port for the dashboard (default: 5001)
-   export PORT=5001
+3. **Environment Configuration**:
+   The dashboard comes pre-configured with the Heroku database connection. The `.env` file contains:
+   ```env
+   # Heroku Production Database
+   DATABASE_URL=postgresql://your-heroku-db-url-here
+   API_BASE_URL=https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com
+   PORT=5001
    ```
 
-4. **Run the dashboard**:
+4. **Start the dashboard**:
+
+   **Option A: Using startup script (Recommended)**
    ```bash
-   python app.py
+   python start_dashboard.py
+   ```
+
+   **Option B: Direct start**
+   ```bash
+   hypercorn app:app --bind 0.0.0.0:5001 --workers 1
+   ```
+
+   **Option C: Windows users**
+   ```bash
+   start_dashboard.bat
    ```
 
 5. **Access the dashboard**:
@@ -115,15 +126,21 @@ A comprehensive data viewing and analyzing dashboard for the ACBC (Adaptive Choi
 ## 🔧 Configuration
 
 ### Database Connection
-The dashboard connects directly to the main ACBC PostgreSQL database to access:
+The dashboard connects directly to the **Heroku production PostgreSQL database** to access:
 - `sessions` table: Session information and configurations
 - `screening_tasks` table: Screening phase data and responses
 - `tournament_tasks` table: Tournament phase data and choices
 
 ### Environment Variables
-- `DATABASE_URL`: PostgreSQL connection string
-- `API_BASE_URL`: Main ACBC API URL (for additional features)
+- `DATABASE_URL`: Heroku PostgreSQL connection string (pre-configured)
+- `API_BASE_URL`: Main ACBC API URL (pre-configured)
 - `PORT`: Dashboard port (default: 5001)
+
+### Default Configuration
+The dashboard is pre-configured to connect to the production database:
+- **Database**: Heroku PostgreSQL production database
+- **API URL**: `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com`
+- **Port**: `5001`
 
 ## 📈 Data Analysis Features
 
@@ -147,7 +164,7 @@ The dashboard connects directly to the main ACBC PostgreSQL database to access:
 
 ### Architecture
 - **Flask Backend**: Lightweight web framework for API endpoints
-- **Async Database**: Async PostgreSQL connections for performance
+- **Async Database**: Async PostgreSQL connections to production database
 - **Chart.js Frontend**: Interactive charts and visualizations
 - **Responsive Design**: Works on desktop and mobile devices
 
@@ -189,14 +206,15 @@ The dashboard uses optimized SQL queries to:
 ### Common Issues
 
 **Database Connection Error**:
-- Verify `DATABASE_URL` is correct
-- Ensure database is accessible
-- Check PostgreSQL service is running
+- Verify `DATABASE_URL` in `.env` file is correct
+- Ensure Heroku database is accessible
+- Check if the production database is running
 
 **No Data Displayed**:
-- Verify database contains ACBC data
+- Verify production database contains ACBC data
 - Check database permissions
 - Review console for error messages
+- Run `python test_connection.py` to diagnose
 
 **Charts Not Loading**:
 - Check browser console for JavaScript errors
@@ -207,8 +225,20 @@ The dashboard uses optimized SQL queries to:
 Run the dashboard in debug mode for detailed error messages:
 ```bash
 export FLASK_ENV=development
-python app.py
+hypercorn app:app --bind 0.0.0.0:5001 --workers 1
 ```
+
+### Connection Test
+Run the connection test to verify everything is working:
+```bash
+python test_connection.py
+```
+
+This will:
+- ✅ Test database connection to production
+- ✅ Verify required tables exist
+- ✅ Check data availability
+- ✅ Test dashboard queries
 
 ## 📝 API Endpoints
 
@@ -238,9 +268,11 @@ For issues or questions:
 2. Review console logs for error messages
 3. Verify database connectivity and permissions
 4. Ensure all dependencies are installed correctly
+5. Run `python test_connection.py` to diagnose issues
 
 ---
 
 **Dashboard Version**: 1.0.0  
 **Last Updated**: December 2024  
-**Compatible with**: ACBC API v1.0.0+ 
+**Compatible with**: ACBC API v1.0.0+  
+**Database**: Heroku Production PostgreSQL 

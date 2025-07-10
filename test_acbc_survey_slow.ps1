@@ -1,25 +1,25 @@
-# ACBC Survey Test Script - Simulating 10 Respondents
+# ACBC Survey Test Script - Slow Version with Delays
 # Smartphone Attributes Test Case
 
 $baseUrl = "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com"
 $headers = @{"Content-Type"="application/json"}
 
-# Smartphone attributes configuration
+# Smartphone attributes configuration - Fixed price formatting
 $smartphoneAttributes = @{
-    "Brand" = @("Apple", "Samsung", "Google", "OnePlus", "Xiaomi")
-    "Price" = @("`$499", "`$699", "`$899", "`$1099")
-    "Screen_Size" = @("5.8`"", "6.1`"", "6.4`"", "6.7`"")
-    "Battery_Life" = @("Up to 12 hrs", "Up to 18 hrs", "Up to 24 hrs")
-    "Camera_Quality" = @("Dual Lens (12MP)", "Triple Lens (48MP)", "Quad Lens (108MP)")
-    "Storage_Capacity" = @("64 GB", "128 GB", "256 GB", "512 GB")
-    "5G_Support" = @("No", "Yes")
-    "Wireless_Charging" = @("No", "Yes")
-    "Water_Resistance" = @("No", "IP67 (1m)", "IP68 (1.5m)")
-    "Operating_System" = @("iOS", "Android")
+    "brand" = @("Apple", "Samsung", "Google", "OnePlus", "Xiaomi")
+    "price" = @("499", "699", "899", "1099")  # Removed $ to avoid PowerShell escaping
+    "screen_size" = @("5.8`"", "6.1`"", "6.4`"", "6.7`"")
+    "battery_life" = @("Up to 12 hrs", "Up to 18 hrs", "Up to 24 hrs")
+    "camera_quality" = @("Dual Lens (12MP)", "Triple Lens (48MP)", "Quad Lens (108MP)")
+    "storage_capacity" = @("64 GB", "128 GB", "256 GB", "512 GB")
+    "5g_support" = @("No", "Yes")
+    "wireless_charging" = @("No", "Yes")
+    "water_resistance" = @("No", "IP67 (1m)", "IP68 (1.5m)")
+    "operating_system" = @("iOS", "Android")
 }
 
-Write-Host "Starting ACBC Survey Test with Smartphone Attributes" -ForegroundColor Green
-Write-Host "Testing 10 respondents..." -ForegroundColor Yellow
+Write-Host "Starting ACBC Survey Test with Delays" -ForegroundColor Green
+Write-Host "Testing 5 respondents with 2-second delays..." -ForegroundColor Yellow
 Write-Host ""
 
 # Function to create BYO configuration
@@ -57,6 +57,7 @@ function Get-ScreeningDesign {
     }
     catch {
         Write-Host "❌ Failed to get screening design for session: $sessionId" -ForegroundColor Red
+        Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
         return $null
     }
 }
@@ -77,6 +78,7 @@ function Submit-ScreeningResponses {
     }
     catch {
         Write-Host "❌ Failed to submit screening responses for session: $sessionId" -ForegroundColor Red
+        Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
         return $false
     }
 }
@@ -86,13 +88,14 @@ function Get-TournamentChoice {
     param($sessionId, $taskNumber)
     
     try {
-        $response = Invoke-WebRequest -Uri "$baseUrl/api/tournament/choice?session_id=$sessionId`&task_number=$taskNumber" -Method GET
+        $response = Invoke-WebRequest -Uri "$baseUrl/api/tournament/choice?session_id=$sessionId&task_number=$taskNumber" -Method GET
         $tournamentData = $response.Content | ConvertFrom-Json
         Write-Host "✅ Tournament choice retrieved: Task $taskNumber, $($tournamentData.concepts.Count) concepts" -ForegroundColor Green
         return $tournamentData
     }
     catch {
         Write-Host "❌ Failed to get tournament choice for session: $sessionId, task: $taskNumber" -ForegroundColor Red
+        Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
         return $null
     }
 }
@@ -115,29 +118,37 @@ function Submit-ChoiceResponse {
     }
     catch {
         Write-Host "❌ Failed to submit choice response for session: $sessionId, task: $taskNumber" -ForegroundColor Red
+        Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
         return $null
     }
 }
 
-# Main test loop for 10 respondents
+# Main test loop for 5 respondents with delays
 $successfulSessions = 0
-$totalSessions = 10
+$totalSessions = 5
 
 for ($i = 1; $i -le $totalSessions; $i++) {
-    $sessionId = "smartphone_respondent_$i"
+    $sessionId = "slow_smartphone_respondent_$i"
     Write-Host "`nTesting Respondent $i of $totalSessions" -ForegroundColor Cyan
     Write-Host "Session ID: $sessionId" -ForegroundColor Gray
     
     # Step 1: Create BYO configuration
     if (-not (Create-BYOConfig -sessionId $sessionId)) {
+        Write-Host "Waiting 3 seconds before next attempt..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 3
         continue
     }
+    
+    # Add delay between requests
+    Start-Sleep -Seconds 2
     
     # Step 2: Get screening design
     $screeningTasks = Get-ScreeningDesign -sessionId $sessionId
     if (-not $screeningTasks) {
         continue
     }
+    
+    Start-Sleep -Seconds 1
     
     # Step 3: Submit screening responses (random responses)
     $screeningResponses = @()
@@ -149,15 +160,19 @@ for ($i = 1; $i -le $totalSessions; $i++) {
         continue
     }
     
-    # Step 4: Complete tournament tasks (simulate 3 tasks per respondent)
+    Start-Sleep -Seconds 1
+    
+    # Step 4: Complete tournament tasks (simulate 2 tasks per respondent)
     $currentTask = 1
-    $maxTasks = 3
+    $maxTasks = 2
     
     for ($task = 1; $task -le $maxTasks; $task++) {
         $tournamentData = Get-TournamentChoice -sessionId $sessionId -taskNumber $task
         if (-not $tournamentData) {
             break
         }
+        
+        Start-Sleep -Seconds 1
         
         # Randomly select a concept
         $selectedConceptId = Get-Random -Minimum 0 -Maximum $tournamentData.concepts.Count
@@ -168,10 +183,17 @@ for ($i = 1; $i -le $totalSessions; $i++) {
         }
         
         $currentTask = $nextTask
+        Start-Sleep -Seconds 1
     }
     
     $successfulSessions++
     Write-Host "✅ Respondent $i completed successfully!" -ForegroundColor Green
+    
+    # Add delay between respondents
+    if ($i -lt $totalSessions) {
+        Write-Host "Waiting 3 seconds before next respondent..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 3
+    }
 }
 
 Write-Host "`nTest Results Summary" -ForegroundColor Magenta

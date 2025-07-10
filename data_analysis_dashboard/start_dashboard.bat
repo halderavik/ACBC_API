@@ -46,7 +46,7 @@ echo ⏹️  Press Ctrl+C to stop the server
 echo.
 
 REM Start the dashboard with Uvicorn (better Windows compatibility)
-uvicorn app:app --host 0.0.0.0 --port 5001
+uvicorn app:asgi_app --host 0.0.0.0 --port 5001
 
 echo.
 echo 🛑 Dashboard stopped

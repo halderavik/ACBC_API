@@ -2,11 +2,13 @@
 
 Get the ACBC Data Analysis Dashboard running in 5 minutes!
 
+**🔄 Updated**: This dashboard now connects directly to the **Heroku production database** to provide real-time analysis of live data.
+
 ## 📋 Prerequisites
 
 - Python 3.8 or higher
-- PostgreSQL database with ACBC data
-- Access to the main ACBC database
+- Access to the Heroku production database
+- No local PostgreSQL required (connects to production)
 
 ## ⚡ Quick Start (3 Steps)
 
@@ -29,7 +31,7 @@ python start_dashboard.py
 
 **Option B: Direct start**
 ```bash
-python app.py
+hypercorn app:app --bind 0.0.0.0:5001 --workers 1
 ```
 
 **Option C: Windows users**
@@ -45,25 +47,21 @@ Once started, open your browser and go to:
 
 ## 🔧 Configuration
 
-### Environment Variables (Optional)
+### Environment Variables (Pre-configured)
 
-Set these environment variables to customize the dashboard:
+The dashboard comes pre-configured with the Heroku database connection. The `.env` file contains:
 
-```bash
-# Database connection (REQUIRED - update with your actual database)
-export DATABASE_URL="postgresql://username:password@localhost/acbc_db"
-
-# API base URL (optional)
-export API_BASE_URL="https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com"
-
-# Dashboard port (default: 5001)
-export PORT=5001
+```env
+# Heroku Production Database
+DATABASE_URL=postgresql://your-heroku-db-url-here
+API_BASE_URL=https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com
+PORT=5001
 ```
 
 ### Default Configuration
 
-If you don't set environment variables, the dashboard uses these defaults:
-- **Database**: `postgresql://postgres:password@localhost/acbc_db`
+The dashboard is pre-configured to connect to the production database:
+- **Database**: Heroku PostgreSQL production database
 - **API URL**: `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com`
 - **Port**: `5001`
 
@@ -76,7 +74,7 @@ python test_connection.py
 ```
 
 This will:
-- ✅ Test database connection
+- ✅ Test database connection to production
 - ✅ Verify required tables exist
 - ✅ Check data availability
 - ✅ Test dashboard queries
@@ -120,12 +118,12 @@ Once running, you'll have access to:
 ### Common Issues
 
 **"Database connection failed"**
-- Check if PostgreSQL is running
-- Verify DATABASE_URL is correct
-- Ensure database credentials are valid
+- Check if Heroku database is accessible
+- Verify DATABASE_URL in `.env` file is correct
+- Ensure production database credentials are valid
 
 **"No data displayed"**
-- Verify database contains ACBC data
+- Verify production database contains ACBC data
 - Check if sessions, screening_tasks, and tournament_tasks tables exist
 - Run `python test_connection.py` to diagnose
 
@@ -137,7 +135,7 @@ Once running, you'll have access to:
 
 1. **Run the test script**: `python test_connection.py`
 2. **Check the logs**: Look for error messages in the console
-3. **Verify database**: Ensure ACBC tables exist and contain data
+3. **Verify database**: Ensure ACBC tables exist and contain data in production
 4. **Check environment**: Verify all environment variables are set correctly
 
 ## 📱 Dashboard Usage
@@ -175,4 +173,5 @@ If you encounter issues:
 ---
 
 **Dashboard Version**: 1.0.0  
-**Last Updated**: December 2024 
+**Last Updated**: December 2024  
+**Database**: Heroku Production PostgreSQL 

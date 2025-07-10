@@ -62,7 +62,7 @@ def main():
     
     try:
         # Start the dashboard with Uvicorn (better Windows compatibility)
-        cmd = [str(uvicorn_exe), "app:app", "--host", "0.0.0.0", "--port", "5001"]
+        cmd = [str(uvicorn_exe), "app:asgi_app", "--host", "0.0.0.0", "--port", "5001"]
         subprocess.run(cmd, check=True)
     except KeyboardInterrupt:
         print("\n🛑 Dashboard stopped by user")

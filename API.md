@@ -47,6 +47,8 @@ For detailed dashboard documentation, see [dashboard/README.md](./dashboard/READ
 
 The ACBC API also includes a comprehensive data analysis dashboard for viewing and analyzing all collected data.
 
+**🔄 Updated**: This dashboard now connects directly to the **Heroku production database** to provide real-time analysis of live data.
+
 **Data Analysis Dashboard URL:** `http://localhost:5001` (when running locally)
 
 **Features:**
@@ -57,7 +59,7 @@ The ACBC API also includes a comprehensive data analysis dashboard for viewing a
 - **Completion Analysis**: Session completion flow and time analysis
 - **Attribute Analysis**: Attribute preferences and utility analysis
 - **Interactive Charts**: Chart.js visualizations for all data types
-- **Real-time Data**: Direct connection to production database
+- **Real-time Data**: Direct connection to production Heroku database
 - **Export Functionality**: JSON export of all collected data
 - **Responsive Design**: Works on desktop and mobile devices
 
@@ -65,6 +67,7 @@ The ACBC API also includes a comprehensive data analysis dashboard for viewing a
 ```bash
 cd data_analysis_dashboard
 pip install -r requirements.txt
+# Dashboard comes pre-configured with Heroku database connection
 hypercorn app:app --bind 0.0.0.0:5001 --workers 1  # Use Hypercorn for async support
 ```
 
@@ -78,6 +81,15 @@ start_dashboard.bat
 ```bash
 cd data_analysis_dashboard
 python start_dashboard.py
+```
+
+**Configuration:**
+The dashboard comes pre-configured with the Heroku database connection. The `.env` file contains:
+```env
+# Heroku Production Database
+DATABASE_URL=postgresql://your-heroku-db-url-here
+API_BASE_URL=https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com
+PORT=5001
 ```
 
 For detailed data analysis dashboard documentation, see [data_analysis_dashboard/README.md](./data_analysis_dashboard/README.md).
@@ -513,7 +525,7 @@ curl -X POST "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/to
   }'
 ```
 
-### Postman Collection
+### Using Postman
 
 You can import these requests into Postman:
 
@@ -539,6 +551,15 @@ You can import these requests into Postman:
    - Method: POST
    - URL: `{{base_url}}/api/tournament/choice-response`
    - Body: Raw JSON with ChoiceResponseIn
+
+### Testing with PowerShell Script
+
+A comprehensive test script is available for testing the full ACBC workflow:
+
+```bash
+# Run the test script (generates 5 respondents with smartphone data)
+python test_acbc_survey_slow.ps1
+```
 
 ---
 
@@ -573,6 +594,9 @@ A: The `selected_concept_id` must be a valid index (0, 1, 2, etc.) into the conc
 
 ### Q: What if I get "Multiple rows were found" errors?
 A: This indicates duplicate tournament tasks in the database. The API now handles this automatically, but you may need to use concept ID 0 for legacy sessions.
+
+### Q: How do I view the collected data?
+A: Use the data analysis dashboard at `http://localhost:5001` which connects directly to the production database.
 
 ---
 
@@ -616,9 +640,9 @@ A: This indicates duplicate tournament tasks in the database. The API now handle
 **"Database connection failed"**
 - **Cause**: Database URL not configured or database not accessible
 - **Solution**: 
-  1. Check DATABASE_URL environment variable
-  2. Ensure PostgreSQL is running
-  3. Verify database credentials
+  1. Check DATABASE_URL in `.env` file
+  2. Ensure Heroku database is accessible
+  3. Verify production database credentials
   4. Test connection with `python test_connection.py`
 
 **"Port already in use"**
@@ -644,11 +668,12 @@ A: This indicates duplicate tournament tasks in the database. The API now handle
   ```
 
 **"No data displayed in charts"**
-- **Cause**: No data in database or connection issues
+- **Cause**: No data in production database or connection issues
 - **Solution**:
-  1. Check database connection
+  1. Check database connection to production
   2. Verify data exists in production database
   3. Test with sample data generation
+  4. Run `python test_connection.py` to diagnose
 
 ### Data Structure Compatibility
 
@@ -733,7 +758,7 @@ For technical support or questions about the API:
 1. **API Issues**: Check the interactive docs and error messages
 2. **Dashboard Issues**: Verify async Flask setup and database connection
 3. **Deployment Issues**: Check Heroku logs and configuration
-4. **Data Issues**: Use the data analysis dashboard to inspect data
+4. **Data Issues**: Use the data analysis dashboard to inspect production data
 
 ---
 
@@ -741,7 +766,7 @@ For technical support or questions about the API:
 
 - **API Version**: 1.2.0
 - **Framework**: FastAPI
-- **Database**: PostgreSQL
+- **Database**: PostgreSQL (Heroku)
 - **Deployment**: Heroku
 - **Last Updated**: December 2024
 
@@ -755,4 +780,5 @@ For technical support or questions about the API:
 - ✅ Improved error handling and troubleshooting documentation
 - ✅ Added backward compatibility for legacy data structures
 - ✅ Enhanced duplicate tournament task handling
-- ✅ Updated concept ID validation and processing 
+- ✅ Updated concept ID validation and processing
+- ✅ Data analysis dashboard now connects to production database 
