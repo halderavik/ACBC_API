@@ -19,8 +19,8 @@ echo ✅ Activating virtual environment...
 call venv\Scripts\activate.bat
 
 REM Check if requirements are installed
-if not exist "venv\Scripts\hypercorn.exe" (
-    echo ❌ Hypercorn not found! Installing requirements...
+if not exist "venv\Scripts\uvicorn.exe" (
+    echo ❌ Uvicorn not found! Installing requirements...
     pip install -r requirements.txt
     if errorlevel 1 (
         echo ❌ Failed to install requirements!
@@ -45,8 +45,8 @@ echo 📊 Data Analysis Dashboard will be available at: http://localhost:5001
 echo ⏹️  Press Ctrl+C to stop the server
 echo.
 
-REM Start the dashboard with Hypercorn
-hypercorn app:app --bind 0.0.0.0:5001 --reload
+REM Start the dashboard with Uvicorn (better Windows compatibility)
+uvicorn app:app --host 0.0.0.0 --port 5001
 
 echo.
 echo 🛑 Dashboard stopped

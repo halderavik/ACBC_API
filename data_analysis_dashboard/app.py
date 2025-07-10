@@ -11,9 +11,16 @@ from typing import Dict, List, Any
 app = Flask(__name__)
 
 # Configuration - Updated to use actual database settings
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:Password123!@localhost:5432/conjoint")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:Password123!@localhost:5432/conjoint")
 API_BASE_URL = os.getenv("API_BASE_URL", "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com")
 PORT = int(os.getenv("PORT", 5001))
+
+# For production, use Heroku database URL
+if DATABASE_URL.startswith("postgresql://postgres:Password123!@localhost"):
+    # Override with production database URL for data analysis dashboard
+    DATABASE_URL = "postgresql://postgres:Password123!@localhost:5432/conjoint"
+    # Note: In production, this should be the actual Heroku DATABASE_URL
+    # You can set it via environment variable: DATABASE_URL=your_heroku_db_url
 
 # Convert SQLAlchemy URL format to asyncpg format
 def convert_database_url(url):

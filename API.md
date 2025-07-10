@@ -27,7 +27,7 @@ The ACBC API includes a comprehensive monitoring dashboard for tracking API acti
 cd dashboard
 pip install -r requirements.txt
 python generate_sample_data.py  # Optional: Generate demo data
-hypercorn app:app --bind 0.0.0.0:5000  # Use Hypercorn for async support
+hypercorn app:app --bind 0.0.0.0:5000 --workers 1  # Use Hypercorn for async support
 ```
 
 **Integration with API:**
@@ -65,7 +65,7 @@ The ACBC API also includes a comprehensive data analysis dashboard for viewing a
 ```bash
 cd data_analysis_dashboard
 pip install -r requirements.txt
-hypercorn app:app --bind 0.0.0.0:5001  # Use Hypercorn for async support
+hypercorn app:app --bind 0.0.0.0:5001 --workers 1  # Use Hypercorn for async support
 ```
 
 **Quick Start (Windows):**
@@ -603,7 +603,7 @@ A: This indicates duplicate tournament tasks in the database. The API now handle
 - **Solution**: Use Hypercorn ASGI server instead of `python app.py`
   ```bash
   # Instead of: python app.py
-  # Use: hypercorn app:app --bind 0.0.0.0:5000
+  # Use: hypercorn app:app --bind 0.0.0.0:5000 --workers 1
   ```
 
 **"ModuleNotFoundError: No module named 'hypercorn'"**
@@ -632,7 +632,7 @@ A: This indicates duplicate tournament tasks in the database. The API now handle
 **"500 Internal Server Error on /api/sessions-overview"**
 - **Cause**: Async Flask views not properly configured
 - **Solution**: 
-  1. Ensure using Hypercorn: `hypercorn app:app --bind 0.0.0.0:5001`
+  1. Ensure using Hypercorn: `hypercorn app:app --bind 0.0.0.0:5001 --workers 1`
   2. Check Flask version: `pip show flask` (should be 3.1.1+)
   3. Verify async support: `pip show flask[async]`
 

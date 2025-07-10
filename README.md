@@ -25,7 +25,7 @@ A FastAPI-based backend service for implementing Adaptive Choice-Based Conjoint 
 cd dashboard
 pip install -r requirements.txt
 python generate_sample_data.py  # Optional: Generate demo data
-hypercorn app:app --bind 0.0.0.0:5000  # Use Hypercorn for async support
+hypercorn app:app --bind 0.0.0.0:5000 --workers 1  # Use Hypercorn for async support
 ```
 Then open `http://localhost:5000` in your browser.
 
@@ -49,7 +49,7 @@ Then open `http://localhost:5000` in your browser.
 ```bash
 cd data_analysis_dashboard
 pip install -r requirements.txt
-hypercorn app:app --bind 0.0.0.0:5001  # Use Hypercorn for async support
+hypercorn app:app --bind 0.0.0.0:5001 --workers 1  # Use Hypercorn for async support
 ```
 Then open `http://localhost:5001` in your browser.
 
