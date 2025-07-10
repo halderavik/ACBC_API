@@ -65,7 +65,20 @@ async def get_tournament(db: AsyncSession, sid: str, task_number: int, nso: int 
     if existing_tasks:
         # Return existing concepts if task already exists (use the first one if multiple)
         existing_task = existing_tasks[0]
-        return existing_task.concepts
+        
+        # Handle legacy data structure where concepts might be a single dict instead of list
+        concepts = existing_task.concepts
+        if isinstance(concepts, dict):
+            # Convert old single concept structure to new list structure
+            concepts = [{"id": 0, "attributes": concepts}]
+        elif isinstance(concepts, list):
+            # Ensure each concept has the proper structure
+            for i, concept in enumerate(concepts):
+                if isinstance(concept, dict) and "id" not in concept:
+                    # Convert concept without ID to proper structure
+                    concepts[i] = {"id": i, "attributes": concept}
+        
+        return concepts
     
     # Generate new concepts if task doesn't exist
     # Ensure utilities is not None and byo_config exists
