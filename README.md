@@ -10,6 +10,8 @@ A FastAPI-based backend service for implementing Adaptive Choice-Based Conjoint 
 
 **API Documentation:** [API.md](./API.md)
 
+**🔄 Recent Updates**: ✅ **Numpy deployment successful** - all endpoints working with advanced algorithms. All legacy data structure issues resolved.
+
 ## 📊 Monitoring Dashboard
 
 **Dashboard Features:**
@@ -81,7 +83,7 @@ ACBC/
 │   │   ├── models.py            # SQLAlchemy database models
 │   │   ├── schemas.py           # Pydantic schemas for request/response validation
 │   │   ├── services.py          # Business logic and service layer
-│   │   ├── utils.py             # Utility functions for design generation
+│   │   ├── utils.py             # Utility functions for design generation (with numpy)
 │   │   └── routers/
 │   │       ├── byo.py           # BYO configuration endpoints
 │   │       ├── screening.py     # Screening task endpoints
@@ -103,7 +105,7 @@ ACBC/
 │   ├── start_dashboard.bat      # Windows startup script
 │   ├── .env                     # Environment configuration (Heroku DB)
 │   └── requirements.txt         # Data analysis dependencies
-├── requirements.txt             # Root requirements for Heroku
+├── requirements.txt             # Root requirements for Heroku (includes numpy)
 ├── Procfile                     # Heroku process configuration
 ├── runtime.txt                  # Python version specification
 ├── app.json                     # Heroku app configuration
@@ -117,6 +119,7 @@ ACBC/
 - **BYO Configuration**: Set up custom attributes and levels for conjoint analysis
 - **Screening Tasks**: Generate and manage initial screening tasks
 - **Tournament Choices**: Adaptive choice-based conjoint with utility updates
+- **Advanced Algorithms**: Numpy-powered D-optimal design and utility estimation
 - **Async Database**: PostgreSQL with asyncpg for high performance
 - **Automatic Migrations**: Alembic for database schema management
 - **Robust Error Handling**: Comprehensive error handling for malformed requests
@@ -269,6 +272,7 @@ Open your browser and navigate to `http://localhost:5001`
 ✅ **PostgreSQL Database** configured and running  
 ✅ **Database Migrations** applied  
 ✅ **All API Endpoints** tested and working  
+✅ **Numpy Algorithms** functioning properly  
 ✅ **Data Analysis Dashboard** connected to production database  
 
 **Live Application:** `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com`
@@ -400,6 +404,15 @@ A comprehensive test script is available for testing the full ACBC workflow:
 python test_acbc_survey_slow.ps1
 ```
 
+### Comprehensive API Testing
+
+A comprehensive test script is available to verify all endpoints:
+
+```bash
+# Test all API endpoints
+python test_all_endpoints.py
+```
+
 ## 📚 API Documentation
 
 ### Complete Documentation
@@ -431,7 +444,7 @@ backend/
 │   ├── models.py            # SQLAlchemy ORM models
 │   ├── schemas.py           # Pydantic validation schemas
 │   ├── services.py          # Business logic layer
-│   ├── utils.py             # Utility functions
+│   ├── utils.py             # Utility functions (with numpy algorithms)
 │   └── routers/             # API route handlers
 │       ├── byo.py           # BYO configuration routes
 │       ├── screening.py     # Screening task routes
@@ -456,6 +469,7 @@ The application uses the following main tables:
 - **Robust Error Handling**: Comprehensive error responses
 - **Input Validation**: Pydantic schemas ensure data integrity
 - **Adaptive Learning**: Utility estimates update based on user choices
+- **Advanced Algorithms**: Numpy-powered D-optimal design and utility estimation
 
 ## 🚀 Performance & Scalability
 
@@ -463,6 +477,7 @@ The application uses the following main tables:
 - **Database Connection Pooling**: Efficient database connections
 - **Stateless Design**: Each request is independent
 - **Heroku Optimization**: Configured for Heroku's ephemeral filesystem
+- **Numpy Optimization**: Efficient numerical computations for advanced algorithms
 
 ## 🔒 Security Considerations
 

@@ -8,7 +8,7 @@ The ACBC (Adaptive Choice-Based Conjoint) API is a FastAPI-based backend service
 
 **API Documentation:** `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/docs`
 
-**🔄 Recent Updates**: All legacy data structure issues have been resolved. The API now automatically handles both old and new data formats seamlessly.
+**🔄 Recent Updates**: All legacy data structure issues have been resolved. The API now automatically handles both old and new data formats seamlessly. **✅ Numpy deployment successful** - all endpoints working with advanced algorithms.
 
 ## 📊 Monitoring Dashboard
 
@@ -786,13 +786,20 @@ For technical support or questions about the API:
 
 ## Version Information
 
-- **API Version**: 1.3.0
+- **API Version**: 1.4.0
 - **Framework**: FastAPI
 - **Database**: PostgreSQL (Heroku)
 - **Deployment**: Heroku
 - **Last Updated**: December 2024
 
-### Recent Updates (v1.3.0)
+### Recent Updates (v1.4.0)
+- ✅ **FIXED**: Numpy deployment issue - all endpoints now working with advanced algorithms
+- ✅ **FIXED**: BYO config JSON parsing - robust handling of URL-encoded parameters
+- ✅ **FIXED**: Adaptive update numpy float copy bug - proper handling of numpy data types
+- ✅ **TESTED**: All endpoints working correctly after numpy deployment
+- ✅ **ENHANCED**: Error handling for malformed JSON and URL parameters
+- ✅ **IMPROVED**: Backward compatibility for all data structures
+- ✅ **VERIFIED**: Complete API workflow tested and functional
 - ✅ **FIXED**: Legacy data structure issues - automatic conversion of old concept formats
 - ✅ **FIXED**: ResponseValidationError for tournament choice endpoints
 - ✅ **FIXED**: 500 Internal Server Error on tournament choice with legacy sessions
@@ -812,6 +819,9 @@ For technical support or questions about the API:
 
 ### Testing Results
 - ✅ All API endpoints tested and working correctly
+- ✅ Numpy algorithms functioning properly
+- ✅ BYO config endpoint handling malformed parameters
+- ✅ Tournament choice response working with numpy data types
 - ✅ Legacy sessions (e.g., `FS_49aNx0LOo15sg01`) working perfectly
 - ✅ New sessions working with proper data structures
 - ✅ Tournament choice workflow functioning correctly
