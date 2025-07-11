@@ -37,15 +37,23 @@ async def byo_config_get(
         
         # Extract selected_attributes
         selected_attributes = None
-        attr_match = re.search(r'selected_attributes:?=\'?([^\'&\s]+)\'?', decoded_url)
+        attr_match = re.search(r'selected_attributes=([^&\s]+)', decoded_url)
         if attr_match:
             selected_attributes = attr_match.group(1)
         
         if not selected_attributes:
             raise HTTPException(status_code=400, detail="selected_attributes parameter is required")
         
-        # Parse the selected_attributes JSON string
-        attributes_dict = json.loads(selected_attributes)
+        # Parse the selected_attributes JSON string robustly
+        try:
+            attributes_dict = json.loads(selected_attributes)
+        except json.JSONDecodeError:
+            from urllib.parse import unquote_plus
+            try:
+                decoded_attributes = unquote_plus(selected_attributes)
+                attributes_dict = json.loads(decoded_attributes)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON in selected_attributes")
         
         # Create BYOConfig object
         config = BYOConfig(
@@ -57,8 +65,6 @@ async def byo_config_get(
         await init_screening(db, sid, config.selected_attributes)
         return {"session_id": sid}
         
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON in selected_attributes")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -84,15 +90,23 @@ async def byo_config_catch_all(
         
         # Extract selected_attributes
         selected_attributes = None
-        attr_match = re.search(r'selected_attributes:?=\'?([^\'&\s]+)\'?', decoded_url)
+        attr_match = re.search(r'selected_attributes=([^&\s]+)', decoded_url)
         if attr_match:
             selected_attributes = attr_match.group(1)
         
         if not selected_attributes:
             raise HTTPException(status_code=400, detail="selected_attributes parameter is required")
         
-        # Parse the selected_attributes JSON string
-        attributes_dict = json.loads(selected_attributes)
+        # Parse the selected_attributes JSON string robustly
+        try:
+            attributes_dict = json.loads(selected_attributes)
+        except json.JSONDecodeError:
+            from urllib.parse import unquote_plus
+            try:
+                decoded_attributes = unquote_plus(selected_attributes)
+                attributes_dict = json.loads(decoded_attributes)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid JSON in selected_attributes")
         
         # Create BYOConfig object
         config = BYOConfig(
@@ -104,7 +118,5 @@ async def byo_config_catch_all(
         await init_screening(db, sid, config.selected_attributes)
         return {"session_id": sid}
         
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON in selected_attributes")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

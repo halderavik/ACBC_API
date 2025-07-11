@@ -508,7 +508,8 @@ def adaptive_update(current_utils: Dict[str, Dict[str, float]], choice: Dict[str
     # Create a copy to avoid modifying the original
     updated_utils = {}
     for attr, level_utils in current_utils.items():
-        updated_utils[attr] = level_utils.copy()
+        # Use dict() to copy, which works for both float and numpy float
+        updated_utils[attr] = dict(level_utils)
     
     # Simple update: increase utility for chosen levels
     for attr, level in choice.items():
