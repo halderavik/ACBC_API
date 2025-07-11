@@ -8,6 +8,8 @@ The ACBC (Adaptive Choice-Based Conjoint) API is a FastAPI-based backend service
 
 **API Documentation:** `https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/docs`
 
+**🔄 Recent Updates**: All legacy data structure issues have been resolved. The API now automatically handles both old and new data formats seamlessly.
+
 ## 📊 Monitoring Dashboard
 
 The ACBC API includes a comprehensive monitoring dashboard for tracking API activity, performance, and user behavior.
@@ -303,7 +305,7 @@ GET /api/tournament/choice?session_id=test123&task_number=1
   "task_number": 1,
   "concepts": [
     {
-      "id": 1,
+      "id": 0,
       "attributes": {
         "brand": "Nike",
         "material": "leather",
@@ -311,7 +313,7 @@ GET /api/tournament/choice?session_id=test123&task_number=1
       }
     },
     {
-      "id": 2,
+      "id": 1,
       "attributes": {
         "brand": "Adidas",
         "material": "canvas",
@@ -324,7 +326,7 @@ GET /api/tournament/choice?session_id=test123&task_number=1
 
 **Response Fields:**
 - `task_number`: Current tournament task number
-- `concepts`: Array of concept pairs for choice tasks
+- `concepts`: Array of concept pairs for choice tasks with IDs and attributes
 
 **Error Responses:**
 - `400 Bad Request`: Missing session_id or invalid task_number
@@ -374,7 +376,7 @@ Submits a choice response and updates utility estimates.
 **Important Notes:**
 - `selected_concept_id` must be a valid index into the concepts array (0, 1, 2, etc.)
 - The concept IDs correspond to the order in the concepts array returned by the tournament choice endpoint
-- For sessions with legacy data structure, only concept ID 0 may be available initially
+- The API automatically handles legacy data structures and converts them to the new format
 
 **Error Responses:**
 - `400 Bad Request`: Invalid concept ID (e.g., "Invalid choice_id 1. Must be between 0 and 0")
@@ -561,6 +563,18 @@ A comprehensive test script is available for testing the full ACBC workflow:
 python test_acbc_survey_slow.ps1
 ```
 
+### Testing Individual Sessions
+
+You can test any existing session using the endpoints:
+
+```bash
+# Test screening design
+curl "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/screening/design?session_id=YOUR_SESSION_ID"
+
+# Test tournament choice
+curl "https://acbc-api-20250620-170752-29e5f1e7fc59.herokuapp.com/api/tournament/choice?session_id=YOUR_SESSION_ID&task_number=1"
+```
+
 ---
 
 ## Frequently Asked Questions
@@ -598,6 +612,9 @@ A: This indicates duplicate tournament tasks in the database. The API now handle
 ### Q: How do I view the collected data?
 A: Use the data analysis dashboard at `http://localhost:5001` which connects directly to the production database.
 
+### Q: What if I get 500 errors on tournament choice endpoints?
+A: The API now automatically handles legacy data structures. If you still get errors, check that screening responses have been submitted for the session.
+
 ---
 
 ## Troubleshooting
@@ -614,11 +631,15 @@ A: Use the data analysis dashboard at `http://localhost:5001` which connects dir
 
 **"Concepts should be a list, but got <class 'dict'>"**
 - **Cause**: Legacy data structure where concepts were stored as single objects
-- **Solution**: The API now automatically converts old data structure to new format
+- **Solution**: ✅ **FIXED** - The API now automatically converts old data structure to new format
 
 **"Tournament task not found for session X, task Y"**
 - **Cause**: No tournament task exists for the specified session and task number
 - **Solution**: Ensure you've completed the screening phase and the tournament task exists
+
+**"ResponseValidationError: Input should be a valid list"**
+- **Cause**: Legacy data structure issue with tournament concepts
+- **Solution**: ✅ **FIXED** - The API now automatically handles legacy data conversion
 
 ### Dashboard Issues
 
@@ -677,10 +698,11 @@ A: Use the data analysis dashboard at `http://localhost:5001` which connects dir
 
 ### Data Structure Compatibility
 
-The API is backward-compatible with legacy data structures:
+The API is now fully backward-compatible with legacy data structures:
 - **Old Structure**: Single concept stored as dictionary
 - **New Structure**: List of concepts with IDs and attributes
-- **Automatic Conversion**: Old data is automatically converted to new format
+- **Automatic Conversion**: ✅ **FIXED** - Old data is automatically converted to new format
+- **Seamless Operation**: Both old and new sessions work without any issues
 
 ### Performance Issues
 
@@ -764,13 +786,19 @@ For technical support or questions about the API:
 
 ## Version Information
 
-- **API Version**: 1.2.0
+- **API Version**: 1.3.0
 - **Framework**: FastAPI
 - **Database**: PostgreSQL (Heroku)
 - **Deployment**: Heroku
 - **Last Updated**: December 2024
 
-### Recent Updates (v1.2.0)
+### Recent Updates (v1.3.0)
+- ✅ **FIXED**: Legacy data structure issues - automatic conversion of old concept formats
+- ✅ **FIXED**: ResponseValidationError for tournament choice endpoints
+- ✅ **FIXED**: 500 Internal Server Error on tournament choice with legacy sessions
+- ✅ **IMPROVED**: Error handling and validation for all endpoints
+- ✅ **TESTED**: All endpoints working correctly with existing sessions
+- ✅ **ENHANCED**: Backward compatibility for all data structures
 - ✅ Added comprehensive data analysis dashboard
 - ✅ Updated both dashboards to Flask 3.x with async support
 - ✅ Added Hypercorn ASGI server for proper async Flask support
@@ -778,7 +806,13 @@ For technical support or questions about the API:
 - ✅ Enhanced .gitignore with comprehensive patterns
 - ✅ Added startup scripts for easy dashboard deployment
 - ✅ Improved error handling and troubleshooting documentation
-- ✅ Added backward compatibility for legacy data structures
 - ✅ Enhanced duplicate tournament task handling
 - ✅ Updated concept ID validation and processing
-- ✅ Data analysis dashboard now connects to production database 
+- ✅ Data analysis dashboard now connects to production database
+
+### Testing Results
+- ✅ All API endpoints tested and working correctly
+- ✅ Legacy sessions (e.g., `FS_49aNx0LOo15sg01`) working perfectly
+- ✅ New sessions working with proper data structures
+- ✅ Tournament choice workflow functioning correctly
+- ✅ Data analysis dashboard showing real-time production data 
