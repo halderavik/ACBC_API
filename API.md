@@ -786,11 +786,21 @@ For technical support or questions about the API:
 
 ## Version Information
 
-- **API Version**: 1.4.0
+- **API Version**: 1.4.1
 - **Framework**: FastAPI
 - **Database**: PostgreSQL (Heroku)
 - **Deployment**: Heroku
 - **Last Updated**: December 2024
+
+### Recent Updates (v1.4.1)
+- ✅ **FIXED**: Syntax errors in utils.py and routers - all code now compiles correctly
+- ✅ **FIXED**: Indentation error in adaptive_update function - proper error handling
+- ✅ **ENHANCED**: Screening responses endpoint with comprehensive validation
+- ✅ **IMPROVED**: BYO config endpoint with better error messages
+- ✅ **TESTED**: Complete 3-attribute, 4-level ACBC workflow working perfectly
+- ✅ **VERIFIED**: All endpoints tested locally and deployed successfully
+- ✅ **DEPLOYED**: All fixes successfully deployed to Heroku production
+- ✅ **TESTED**: Deployed API working correctly with comprehensive test suite
 
 ### Recent Updates (v1.4.0)
 - ✅ **FIXED**: Numpy deployment issue - all endpoints now working with advanced algorithms
@@ -825,4 +835,8 @@ For technical support or questions about the API:
 - ✅ Legacy sessions (e.g., `FS_49aNx0LOo15sg01`) working perfectly
 - ✅ New sessions working with proper data structures
 - ✅ Tournament choice workflow functioning correctly
-- ✅ Data analysis dashboard showing real-time production data 
+- ✅ Data analysis dashboard showing real-time production data
+- ✅ **NEW**: Complete 3-attribute, 4-level ACBC workflow tested successfully
+- ✅ **NEW**: All syntax errors fixed and code compiles correctly
+- ✅ **NEW**: Enhanced error handling and validation working properly
+- ✅ **NEW**: Deployed API tested with comprehensive test suite 
