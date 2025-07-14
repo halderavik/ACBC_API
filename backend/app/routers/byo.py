@@ -12,9 +12,31 @@ router = APIRouter()
 
 @router.post("")
 async def byo_config(config: BYOConfig, db: AsyncSession = Depends(get_db)):
-    sid = await create_session_record(config, db)
-    await init_screening(db, sid, config.selected_attributes)
-    return {"session_id": sid}
+    """Create a new BYO configuration and session."""
+    try:
+        # Validate selected_attributes
+        if not config.selected_attributes:
+            raise HTTPException(
+                status_code=422, 
+                detail="selected_attributes is required and cannot be empty"
+            )
+        
+        # Validate that each attribute has at least one value
+        for attr_name, attr_values in config.selected_attributes.items():
+            if not attr_values or len(attr_values) == 0:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Attribute '{attr_name}' must have at least one value"
+                )
+        
+        sid = await create_session_record(config, db)
+        await init_screening(db, sid, config.selected_attributes)
+        return {"session_id": sid, "message": "Session created successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.get("")
 async def byo_config_get(
