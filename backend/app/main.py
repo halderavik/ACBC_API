@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import byo, screening, tournament
 from .database import engine, Base
@@ -48,22 +48,3 @@ async def health_check_post():
     """Health check endpoint for Heroku (POST method support)."""
     return {"status": "healthy"}
 
-@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-async def catch_all(path: str):
-    """Catch-all route for any unmatched endpoints."""
-    return {
-        "error": "Endpoint not found",
-        "path": f"/{path}",
-        "message": "Please check the API documentation at /docs for available endpoints",
-        "available_endpoints": [
-            "GET /",
-            "GET /health",
-            "POST /health",
-            "GET /docs",
-            "POST /api/byo-config",
-            "GET /api/screening/design",
-            "POST /api/screening/responses",
-            "GET /api/tournament/choice",
-            "POST /api/tournament/choice-response"
-        ]
-    }
