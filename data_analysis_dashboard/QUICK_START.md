@@ -113,6 +113,12 @@ Once running, you'll have access to:
 - BYO configuration analysis
 - Level preference analysis
 
+### 🔎 Session Filtering (NEW)
+- Use the multi-select dropdown at the top (except Overview tab) to filter by one or more session IDs
+- Click the **Submit** button to apply the filter and update all charts/tables in the current tab
+- Filtering works for Sessions, Designs, Responses, Completion, and Attributes tabs
+- The filter dropdown is populated from `/api/all-session-ids` (all available session IDs)
+
 ## 🚨 Troubleshooting
 
 ### Common Issues

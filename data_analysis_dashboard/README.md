@@ -42,6 +42,12 @@ A comprehensive data viewing and analyzing dashboard for the ACBC (Adaptive Choi
 - **Utility Analysis**: Examination of utility values and their distribution
 - **Preference Patterns**: Identification of attribute importance and preference patterns
 
+### 🔎 Session Filtering (NEW)
+- **Session ID Filter**: Multi-select dropdown to filter all analysis tabs (except Overview) by one or more session IDs
+- **Submit Button**: Apply the filter to update all charts and tables in the current tab
+- **Works on**: Sessions, Designs, Responses, Completion, and Attributes tabs
+- **Endpoint**: Uses `/api/all-session-ids` to fetch all available session IDs
+
 ## 🚀 Setup Instructions
 
 ### Prerequisites
@@ -244,12 +250,13 @@ This will:
 
 The dashboard provides the following API endpoints:
 
-- `GET /api/sessions-overview`: Session overview and statistics
+- `GET /api/sessions-overview`: Session overview and statistics (now supports filtering by session_ids)
+- `GET /api/all-session-ids`: List of all session IDs for filtering
 - `GET /api/session-details/<session_id>`: Detailed session information
-- `GET /api/design-analysis`: Design and concept analysis
-- `GET /api/response-analysis`: Response and choice analysis
-- `GET /api/completion-analysis`: Completion rate analysis
-- `GET /api/attribute-analysis`: Attribute preference analysis
+- `GET /api/design-analysis`: Design and concept analysis (supports session_ids)
+- `GET /api/response-analysis`: Response and choice analysis (supports session_ids)
+- `GET /api/completion-analysis`: Completion rate analysis (supports session_ids)
+- `GET /api/attribute-analysis`: Attribute preference analysis (supports session_ids)
 - `GET /api/export-data`: Export all data for external analysis
 
 ## 🔮 Future Enhancements

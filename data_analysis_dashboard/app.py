@@ -84,23 +84,27 @@ def dashboard():
 
 @app.route('/api/sessions-overview')
 def get_sessions_overview():
-    """Get overview of all sessions."""
+    """Get overview of all sessions, optionally filtered by session_ids."""
     try:
-        # Run async function in sync context
-        loop = get_or_create_loop()
-        
+        session_ids = request.args.get('session_ids')
+        params = []
+        session_filter = ''
+        if session_ids:
+            session_id_list = [s.strip() for s in session_ids.split(',') if s.strip()]
+            session_filter = 'WHERE id = ANY($1)'
+            params = [session_id_list]
         # Get total sessions
-        sessions = run_async_query("""
+        sessions = run_async_query(f'''
             SELECT 
                 id,
                 byo_config,
                 utilities
             FROM sessions 
+            {session_filter}
             ORDER BY id DESC
-        """)
-        
+        ''', *params)
         # Get session completion stats
-        completion_stats = run_async_query("""
+        completion_stats = run_async_query(f'''
             SELECT 
                 COUNT(*) as total_sessions,
                 COUNT(CASE WHEN EXISTS (SELECT 1 FROM screening_tasks st WHERE st.session_id = s.id) THEN 1 END) as screening_started,
@@ -110,10 +114,10 @@ def get_sessions_overview():
                     WHERE tt.session_id = s.id AND tt.choice IS NOT NULL
                 ) THEN 1 END) as tournament_completed
             FROM sessions s
-        """)
-        
+            {'WHERE s.id = ANY($1)' if session_filter else ''}
+        ''', *params)
         # Get recent sessions with details
-        recent_sessions = run_async_query("""
+        recent_sessions = run_async_query(f'''
             SELECT 
                 s.id,
                 s.byo_config::text,
@@ -125,11 +129,11 @@ def get_sessions_overview():
             FROM sessions s
             LEFT JOIN screening_tasks st ON s.id = st.session_id
             LEFT JOIN tournament_tasks tt ON s.id = tt.session_id
+            {'WHERE s.id = ANY($1)' if session_filter else ''}
             GROUP BY s.id, s.byo_config::text, s.utilities::text
             ORDER BY s.id DESC
             LIMIT 20
-        """)
-        
+        ''', *params)
         return jsonify({
             'total_sessions': len(sessions),
             'completion_stats': completion_stats[0] if completion_stats else {},
@@ -182,88 +186,67 @@ def get_session_details(session_id: str):
 
 @app.route('/api/design-analysis')
 def get_design_analysis():
-    """Analyze designs shown across all sessions."""
+    """Analyze designs shown across all sessions, or filtered by session_ids."""
     try:
-        # Run async function in sync context
-        loop = get_or_create_loop()
-        
-        # Get all tournament concepts shown
-        tournament_concepts = run_async_query("""
+        session_ids = request.args.get('session_ids')
+        params = []
+        session_filter = ''
+        if session_ids:
+            session_id_list = [s.strip() for s in session_ids.split(',') if s.strip()]
+            session_filter = 'session_id = ANY($1)'
+            params = [session_id_list]
+        # Tournament concepts
+        tournament_query = f'''
             SELECT 
                 concept::text,
                 COUNT(*) as frequency
             FROM tournament_tasks,
-            json_array_elements(CASE 
-                WHEN json_typeof(concepts) = 'array' THEN concepts::json 
-                ELSE '[]'::json 
-            END) as concept
+                json_array_elements(CASE 
+                    WHEN json_typeof(concepts) = 'array' THEN concepts::json 
+                    ELSE '[]'::json 
+                END) as concept
+            {'WHERE ' + session_filter if session_filter else ''}
             GROUP BY concept::text
             ORDER BY frequency DESC
-        """)
-        
-        # Get all screening concepts shown
-        screening_concepts = run_async_query("""
+        '''
+        tournament_concepts = run_async_query(tournament_query, *params)
+        # Screening concepts
+        screening_query = f'''
             SELECT 
                 concept::text,
                 COUNT(*) as frequency
             FROM screening_tasks
             WHERE concept IS NOT NULL
+            {'AND ' + session_filter if session_filter else ''}
             GROUP BY concept::text
             ORDER BY frequency DESC
-        """)
-        
-        # Get attribute level usage
-        attribute_usage = run_async_query("""
+        '''
+        screening_concepts = run_async_query(screening_query, *params)
+        # Attribute usage
+        attribute_usage_query = f'''
             WITH concept_data AS (
-                SELECT concept::text FROM screening_tasks WHERE concept IS NOT NULL
+                SELECT concept::text FROM screening_tasks WHERE concept IS NOT NULL {'AND ' + session_filter if session_filter else ''}
                 UNION ALL
                 SELECT concept::text FROM tournament_tasks,
-                json_array_elements(CASE 
-                    WHEN json_typeof(concepts) = 'array' THEN concepts::json 
-                    ELSE '[]'::json 
-                END) as concept
+                    json_array_elements(CASE 
+                        WHEN json_typeof(concepts) = 'array' THEN concepts::json 
+                        ELSE '[]'::json 
+                    END) as concept
+                {'WHERE ' + session_filter if session_filter else ''}
             ),
             attribute_levels AS (
                 SELECT 
-                    key as attribute,
-                    value::text as level,
+                    (json_each(concept::json)).key as attribute,
+                    (json_each(concept::json)).value::text as level,
                     COUNT(*) as frequency
-                FROM concept_data,
-                json_each(CASE 
-                    WHEN json_typeof(concept::json) = 'object' THEN concept::json 
-                    ELSE '{}'::json 
-                END) as kv(key, value)
-                GROUP BY key, value::text
+                FROM concept_data
+                GROUP BY attribute, level
             )
             SELECT attribute, level, frequency
             FROM attribute_levels
             ORDER BY attribute, frequency DESC
-        """)
-        
-        # Concept preference analysis
-        concept_preferences = run_async_query("""
-            WITH concept_responses AS (
-                SELECT 
-                    concept::text,
-                    choice,
-                    COUNT(*) as frequency
-                FROM tournament_tasks,
-                json_array_elements(CASE 
-                    WHEN json_typeof(concepts) = 'array' THEN concepts::json 
-                    ELSE '[]'::json 
-                END) as concept
-                WHERE choice IS NOT NULL
-                GROUP BY concept::text, choice
-            )
-            SELECT 
-                concept,
-                choice,
-                frequency,
-                ROUND(frequency * 100.0 / SUM(frequency) OVER (PARTITION BY concept), 2) as preference_percentage
-            FROM concept_responses
-            ORDER BY concept, frequency DESC
-        """)
-        
+        '''
+        attribute_usage = run_async_query(attribute_usage_query, *params)
         return jsonify({
             'screening_concepts': screening_concepts,
             'tournament_concepts': tournament_concepts,
@@ -274,47 +257,51 @@ def get_design_analysis():
 
 @app.route('/api/response-analysis')
 def get_response_analysis():
-    """Analyze respondent responses and choices."""
+    """Analyze respondent responses and choices, optionally filtered by session_ids."""
     try:
-        # Run async function in sync context
-        loop = get_or_create_loop()
-        
-        # Screening response analysis
-        screening_responses = run_async_query("""
+        session_ids = request.args.get('session_ids')
+        params = []
+        session_filter = ''
+        if session_ids:
+            session_id_list = [s.strip() for s in session_ids.split(',') if s.strip()]
+            session_filter = 'session_id = ANY($1)'
+            params = [session_id_list]
+        screening_query = f'''
             SELECT 
                 response,
                 COUNT(*) as count,
-                ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM screening_tasks WHERE response IS NOT NULL), 2) as percentage
-            FROM screening_tasks 
+                ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM screening_tasks WHERE response IS NOT NULL {'AND ' + session_filter if session_filter else ''}), 2) as percentage
+            FROM screening_tasks
             WHERE response IS NOT NULL
+            {'AND ' + session_filter if session_filter else ''}
             GROUP BY response
-        """)
-        
-        # Tournament choice analysis
-        tournament_choices = run_async_query("""
+        '''
+        screening_responses = run_async_query(screening_query, *params)
+        tournament_query = f'''
             SELECT 
                 choice,
                 COUNT(*) as count,
-                ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM tournament_tasks WHERE choice IS NOT NULL), 2) as percentage
-            FROM tournament_tasks 
+                ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM tournament_tasks WHERE choice IS NOT NULL {'AND ' + session_filter if session_filter else ''}), 2) as percentage
+            FROM tournament_tasks
             WHERE choice IS NOT NULL
+            {'AND ' + session_filter if session_filter else ''}
             GROUP BY choice
             ORDER BY choice
-        """)
-        
-        # Concept preference analysis
-        concept_preferences = run_async_query("""
+        '''
+        tournament_choices = run_async_query(tournament_query, *params)
+        concept_preferences_query = f'''
             WITH concept_responses AS (
                 SELECT 
                     concept::text,
                     choice,
                     COUNT(*) as frequency
                 FROM tournament_tasks,
-                json_array_elements(CASE 
-                    WHEN json_typeof(concepts) = 'array' THEN concepts::json 
-                    ELSE '[]'::json 
-                END) as concept
+                    json_array_elements(CASE 
+                        WHEN json_typeof(concepts) = 'array' THEN concepts::json 
+                        ELSE '[]'::json 
+                    END) as concept
                 WHERE choice IS NOT NULL
+                {'AND ' + session_filter if session_filter else ''}
                 GROUP BY concept::text, choice
             )
             SELECT 
@@ -324,8 +311,8 @@ def get_response_analysis():
                 ROUND(frequency * 100.0 / SUM(frequency) OVER (PARTITION BY concept), 2) as preference_percentage
             FROM concept_responses
             ORDER BY concept, frequency DESC
-        """)
-        
+        '''
+        concept_preferences = run_async_query(concept_preferences_query, *params)
         return jsonify({
             'screening_responses': screening_responses,
             'tournament_choices': tournament_choices,
@@ -336,13 +323,16 @@ def get_response_analysis():
 
 @app.route('/api/completion-analysis')
 def get_completion_analysis():
-    """Analyze completion rates and session flow."""
+    """Analyze completion rates and session flow, optionally filtered by session_ids."""
     try:
-        # Run async function in sync context
-        loop = get_or_create_loop()
-        
-        # Session completion flow
-        completion_flow = run_async_query("""
+        session_ids = request.args.get('session_ids')
+        params = []
+        session_filter = ''
+        if session_ids:
+            session_id_list = [s.strip() for s in session_ids.split(',') if s.strip()]
+            session_filter = 's.id = ANY($1)'
+            params = [session_id_list]
+        completion_flow_query = f'''
             SELECT 
                 COUNT(*) as total_sessions,
                 COUNT(CASE WHEN EXISTS (SELECT 1 FROM screening_tasks st WHERE st.session_id = s.id) THEN 1 END) as screening_started,
@@ -356,11 +346,10 @@ def get_completion_analysis():
                     WHERE tt.session_id = s.id AND tt.choice IS NOT NULL
                 ) THEN 1 END) as tournament_completed
             FROM sessions s
-        """)
-        
-        # Since there's no created_at column, we'll use session ID for ordering
-        # and provide basic session statistics instead of time-based analysis
-        session_stats = run_async_query("""
+            {'WHERE ' + session_filter if session_filter else ''}
+        '''
+        completion_flow = run_async_query(completion_flow_query, *params)
+        session_stats_query = f'''
             SELECT 
                 s.id,
                 COUNT(st.id) as screening_tasks_count,
@@ -370,13 +359,13 @@ def get_completion_analysis():
             FROM sessions s
             LEFT JOIN screening_tasks st ON s.id = st.session_id
             LEFT JOIN tournament_tasks tt ON s.id = tt.session_id
+            {'WHERE ' + session_filter if session_filter else ''}
             GROUP BY s.id
             ORDER BY s.id DESC
             LIMIT 30
-        """)
-        
-        # Average responses per session
-        avg_responses = run_async_query("""
+        '''
+        session_stats = run_async_query(session_stats_query, *params)
+        avg_responses_query = f'''
             SELECT 
                 AVG(screening_count) as avg_screening_responses,
                 AVG(tournament_count) as avg_tournament_choices,
@@ -391,10 +380,11 @@ def get_completion_analysis():
                 FROM sessions s
                 LEFT JOIN screening_tasks st ON s.id = st.session_id
                 LEFT JOIN tournament_tasks tt ON s.id = tt.session_id
+                {'WHERE ' + session_filter if session_filter else ''}
                 GROUP BY s.id
             ) session_stats
-        """)
-        
+        '''
+        avg_responses = run_async_query(avg_responses_query, *params)
         return jsonify({
             'completion_flow': completion_flow[0] if completion_flow else {},
             'session_stats': session_stats,  # Instead of time_analysis
@@ -405,56 +395,56 @@ def get_completion_analysis():
 
 @app.route('/api/attribute-analysis')
 def get_attribute_analysis():
-    """Analyze attribute preferences and utilities."""
+    """Analyze attribute preferences and utilities, optionally filtered by session_ids."""
     try:
-        # Run async function in sync context
-        loop = get_or_create_loop()
-        
-        # Get all BYO configurations
-        byo_configs = run_async_query("""
+        session_ids = request.args.get('session_ids')
+        params = []
+        session_filter = ''
+        if session_ids:
+            session_id_list = [s.strip() for s in session_ids.split(',') if s.strip()]
+            session_filter = 'session_id = ANY($1)'
+            params = [session_id_list]
+        byo_configs_query = f'''
             SELECT byo_config::text, COUNT(*) as frequency
-            FROM sessions 
+            FROM sessions
+            {'WHERE id = ANY($1)' if session_filter else ''}
             GROUP BY byo_config::text
             ORDER BY frequency DESC
-        """)
-        
-        # Analyze attribute importance from utilities
-        utility_analysis = run_async_query("""
+        '''
+        byo_configs = run_async_query(byo_configs_query, *params)
+        utility_analysis_query = f'''
             SELECT 
                 utilities::text,
                 COUNT(*) as frequency
-            FROM sessions 
+            FROM sessions
             WHERE utilities IS NOT NULL
+            {'AND id = ANY($1)' if session_filter else ''}
             GROUP BY utilities::text
             ORDER BY frequency DESC
-        """)
-        
-        # Attribute level preference analysis
-        level_preferences = run_async_query("""
+        '''
+        utility_analysis = run_async_query(utility_analysis_query, *params)
+        level_preferences_query = f'''
             WITH concept_responses AS (
                 SELECT 
                     concept::text,
                     choice,
                     COUNT(*) as frequency
                 FROM tournament_tasks,
-                json_array_elements(CASE 
-                    WHEN json_typeof(concepts) = 'array' THEN concepts::json 
-                    ELSE '[]'::json 
-                END) as concept
+                    json_array_elements(CASE 
+                        WHEN json_typeof(concepts) = 'array' THEN concepts::json 
+                        ELSE '[]'::json 
+                    END) as concept
                 WHERE choice IS NOT NULL
+                {'AND ' + session_filter if session_filter else ''}
                 GROUP BY concept::text, choice
             ),
             attribute_levels AS (
                 SELECT 
-                    key as attribute,
-                    value::text as level,
+                    (json_each(concept::json)).key as attribute,
+                    (json_each(concept::json)).value::text as level,
                     SUM(frequency) as total_frequency
-                FROM concept_responses,
-                json_each(CASE 
-                    WHEN json_typeof(concept::json) = 'object' THEN concept::json 
-                    ELSE '{}'::json 
-                END) as kv(key, value)
-                GROUP BY key, value::text
+                FROM concept_responses
+                GROUP BY attribute, level
             )
             SELECT 
                 attribute,
@@ -463,8 +453,8 @@ def get_attribute_analysis():
                 ROUND(total_frequency * 100.0 / SUM(total_frequency) OVER (PARTITION BY attribute), 2) as preference_percentage
             FROM attribute_levels
             ORDER BY attribute, total_frequency DESC
-        """)
-        
+        '''
+        level_preferences = run_async_query(level_preferences_query, *params)
         return jsonify({
             'byo_configs': byo_configs,
             'utility_analysis': utility_analysis,
@@ -514,6 +504,17 @@ def export_data():
             'total_sessions': len(sessions_data),
             'data': sessions_data
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/all-session-ids')
+def get_all_session_ids():
+    """Return a list of all session IDs."""
+    try:
+        session_ids = run_async_query("""
+            SELECT id FROM sessions ORDER BY id DESC
+        """)
+        return jsonify({'session_ids': [row['id'] for row in session_ids]})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

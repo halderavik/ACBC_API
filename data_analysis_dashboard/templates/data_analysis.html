@@ -347,6 +347,11 @@
                 <button class="nav-tab" onclick="showTab('completion')">Completion</button>
                 <button class="nav-tab" onclick="showTab('attributes')">Attributes</button>
             </div>
+            <div id="session-filter-container" style="display:none; margin-top: 10px;">
+                <label for="session-filter" style="font-weight:600; color:#4a5568; margin-right:8px;">Filter by Session ID:</label>
+                <select id="session-filter" multiple style="min-width:220px; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0; font-size:1rem;"></select>
+                <button id="session-filter-submit" style="margin-left:10px; padding:6px 18px; border-radius:6px; border:none; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; font-size:1rem; cursor:pointer;">Submit</button>
+            </div>
         </div>
 
         <!-- Overview Tab -->
@@ -552,6 +557,58 @@
         // Global variables
         let charts = {};
         let currentData = {};
+        let allSessionIds = [];
+        let selectedSessionIds = [];
+        let currentTab = 'overview';
+
+        // Populate session filter dropdown
+        async function populateSessionFilter() {
+            try {
+                const response = await axios.get('/api/all-session-ids');
+                const data = response.data;
+                allSessionIds = data.session_ids;
+                const filter = document.getElementById('session-filter');
+                filter.innerHTML = '';
+                allSessionIds.forEach(id => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = id;
+                    filter.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching session IDs:', error);
+            }
+        }
+
+        // Handle filter change
+        document.addEventListener('DOMContentLoaded', function() {
+            populateSessionFilter();
+            // Remove auto-reload on select change
+            // document.getElementById('session-filter').addEventListener('change', function() {
+            //     selectedSessionIds = Array.from(this.selectedOptions).map(opt => opt.value);
+            //     reloadCurrentTab();
+            // });
+            document.getElementById('session-filter-submit').addEventListener('click', function() {
+                const filter = document.getElementById('session-filter');
+                selectedSessionIds = Array.from(filter.selectedOptions).map(opt => opt.value);
+                reloadCurrentTab();
+            });
+        });
+
+        function reloadCurrentTab() {
+            switch(currentTab) {
+                case 'sessions':
+                    loadSessionsData(); break;
+                case 'designs':
+                    loadDesignAnalysis(); break;
+                case 'responses':
+                    loadResponseAnalysis(); break;
+                case 'completion':
+                    loadCompletionAnalysis(); break;
+                case 'attributes':
+                    loadAttributeAnalysis(); break;
+            }
+        }
 
         // Tab management
         function showTab(tabName) {
@@ -562,11 +619,17 @@
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
-
             // Show selected tab
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
-
+            currentTab = tabName;
+            // Show/hide session filter
+            const filterContainer = document.getElementById('session-filter-container');
+            if (['sessions','designs','responses','completion','attributes'].includes(tabName)) {
+                filterContainer.style.display = '';
+            } else {
+                filterContainer.style.display = 'none';
+            }
             // Load data for the tab
             switch(tabName) {
                 case 'overview':
@@ -590,7 +653,15 @@
             }
         }
 
-        // Data loading functions
+        // Helper to build query param
+        function getSessionFilterParam() {
+            if (selectedSessionIds && selectedSessionIds.length > 0) {
+                return '?session_ids=' + encodeURIComponent(selectedSessionIds.join(','));
+            }
+            return '';
+        }
+
+        // Data loading functions (update endpoints to use filter)
         async function loadOverviewData() {
             try {
                 const response = await axios.get('/api/sessions-overview');
@@ -619,7 +690,7 @@
 
         async function loadSessionsData() {
             try {
-                const response = await axios.get('/api/sessions-overview');
+                const response = await axios.get('/api/sessions-overview' + getSessionFilterParam());
                 const data = response.data;
                 
                 const sessionsList = document.getElementById('sessions-list');
@@ -638,7 +709,7 @@
 
         async function loadDesignAnalysis() {
             try {
-                const response = await axios.get('/api/design-analysis');
+                const response = await axios.get('/api/design-analysis' + getSessionFilterParam());
                 const data = response.data;
                 
                 // Create charts
@@ -656,7 +727,7 @@
 
         async function loadResponseAnalysis() {
             try {
-                const response = await axios.get('/api/response-analysis');
+                const response = await axios.get('/api/response-analysis' + getSessionFilterParam());
                 const data = response.data;
                 
                 // Create charts
@@ -674,7 +745,7 @@
 
         async function loadCompletionAnalysis() {
             try {
-                const response = await axios.get('/api/completion-analysis');
+                const response = await axios.get('/api/completion-analysis' + getSessionFilterParam());
                 const data = response.data;
                 
                 // Create charts
@@ -692,7 +763,7 @@
 
         async function loadAttributeAnalysis() {
             try {
-                const response = await axios.get('/api/attribute-analysis');
+                const response = await axios.get('/api/attribute-analysis' + getSessionFilterParam());
                 const data = response.data;
                 
                 // Create charts

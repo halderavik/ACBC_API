@@ -316,3 +316,13 @@ The ACBC API project has been successfully completed with all core features impl
 - Numpy algorithm verification
 
 The project is now ready for production use and future enhancements with full production database integration for real-time data analysis and advanced numpy-powered algorithms. 
+
+## 🆕 New Tasks (2024-06-27)
+
+- [ ] **Add session_id filter to data analysis dashboard (except overview tab)** (2024-06-27)
+    - Add multi-select session_id filter to all tabs except overview
+    - Update backend endpoints to support filtering by session_id(s)
+    - Update frontend to pass selected session_ids to backend and update charts/tables
+    - Add/Update unit tests for backend filtering
+    - Update documentation
+    - [ ] Discovered During Work: (add here if needed) 
